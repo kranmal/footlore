@@ -1,6 +1,6 @@
 // The whole back end: one dependency-free node:http server.
 //
-//   GET /api/nearby?lat&lng&radius&limit&seen
+//   GET /api/nearby?lat&lng&radius&limit&seen&kind   (kind: see|food|shop)
 //   GET /api/place/:id       (from the tile cache — no provider call)
 //   GET /healthz             (for whatever is watching the process)
 //   everything else          static files out of web/
@@ -12,7 +12,7 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { nearby } from './places.mjs';
+import { feed } from './places.mjs';
 
 const ROOT = fileURLToPath(new URL('../web/', import.meta.url));
 const PORT = Number(process.env.PORT ?? 4173);
@@ -53,9 +53,11 @@ async function handleNearby(url, res) {
   const radius = Math.min(Math.max(Number(url.searchParams.get('radius')) || 900, 200), 3000);
   const limit = Math.min(Math.max(Number(url.searchParams.get('limit')) || 20, 1), 40);
   const seen = (url.searchParams.get('seen') ?? '').split(',').filter(Boolean);
+  const asked = url.searchParams.get('kind') ?? 'see';
+  const kind = ['see', 'food', 'shop'].includes(asked) ? asked : 'see';
 
   try {
-    const result = await nearby({ lat, lng, radius, limit, seen });
+    const result = await feed({ lat, lng, radius, limit, seen, kind });
     for (const p of result.places) remember(p);
     send(res, 200, result);
   } catch (e) {

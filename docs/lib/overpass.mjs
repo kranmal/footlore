@@ -23,16 +23,33 @@ function bbox(lat, lng, radius) {
   return [lat - dLat, lng - dLng, lat + dLat, lng + dLng].map((n) => n.toFixed(6)).join(',');
 }
 
-function query(lat, lng, radius) {
-  const b = bbox(lat, lng, radius);
-  return `[out:json][timeout:25];
-(
+// One query per tab. The sights query is deliberately narrow (see the header);
+// the other two are wide, because "every café" and "every shop" is exactly what
+// those tabs claim to show, and OSM has no notion of a good one.
+const QUERIES = {
+  see: (b) => `
   nwr["historic"]["name"](${b});
   nwr["tourism"~"^(attraction|museum|artwork|viewpoint|gallery)$"]["name"](${b});
   nwr["heritage"]["name"](${b});
   nwr["amenity"="place_of_worship"]["name"]["wikidata"](${b});
   nwr["building"]["wikidata"]["name"](${b});
-  nwr["man_made"~"^(tower|lighthouse|bridge)$"]["name"](${b});
+  nwr["man_made"~"^(tower|lighthouse|bridge)$"]["name"](${b});`,
+
+  food: (b) => `
+  nwr["amenity"~"^(restaurant|cafe|pub|bar|fast_food|food_court|biergarten|ice_cream)$"]["name"](${b});
+  nwr["shop"~"^(bakery|deli|pastry|confectionery|chocolate|coffee|tea)$"]["name"](${b});`,
+
+  // Shops that sell food are on the food tab; the reject list in local.mjs
+  // keeps them off this one rather than a second set of tag filters here.
+  shop: (b) => `
+  nwr["shop"]["name"](${b});
+  nwr["amenity"~"^(marketplace)$"]["name"](${b});`,
+};
+
+function query(lat, lng, radius, kind) {
+  const b = bbox(lat, lng, radius);
+  return `[out:json][timeout:25];
+(${(QUERIES[kind] ?? QUERIES.see)(b)}
 );
 out center tags;`;
 }
@@ -52,7 +69,7 @@ async function post(url, body, signal) {
 }
 
 /** Normalise a raw OSM element into something the rest of the app can hold. */
-function normalise(el) {
+function normalise(el, kind) {
   const t = el.tags ?? {};
   const lat = el.lat ?? el.center?.lat;
   const lng = el.lon ?? el.center?.lon;
@@ -65,8 +82,11 @@ function normalise(el) {
     id: `${el.type[0]}${el.id}`,
     name: t.name,
     lat, lng,
-    kind: 'see',
+    kind,
     tags: t,
+    amenity: t.amenity ?? null,
+    shop: t.shop ?? null,
+    cuisine: t.cuisine ?? null,
     wikidata: t.wikidata ?? null,
     wikipedia,
     heritage: t.heritage ?? t['heritage:operator'] ?? t.listed_status ?? null,
@@ -82,10 +102,11 @@ function normalise(el) {
 /**
  * @returns {Promise<{places: object[], cached: boolean}>}
  */
-export async function fetchNearby(lat, lng, radius = 900) {
+export async function fetchNearby(lat, lng, radius = 900, kind = 'see') {
   const key = tileKey(lat, lng, radius);
-  const { value, cached } = await through('osm', key, TTL.osm, async () => {
-    const q = query(lat, lng, radius);
+  const ns = kind === 'see' ? 'osm' : `osm-${kind}`;
+  const { value, cached } = await through(ns, key, TTL.osm, async () => {
+    const q = query(lat, lng, radius, kind);
     let lastErr;
     for (const url of ENDPOINTS) {
       try {
@@ -93,7 +114,7 @@ export async function fetchNearby(lat, lng, radius = 900) {
         const timer = setTimeout(() => ac.abort(), 30_000);
         const json = await post(url, q, ac.signal);
         clearTimeout(timer);
-        return json.elements.map(normalise).filter(Boolean);
+        return json.elements.map((el) => normalise(el, kind)).filter(Boolean);
       } catch (e) {
         lastErr = e;
       }
