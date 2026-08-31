@@ -9,7 +9,7 @@ no accounts.
 
 ```bash
 npm start          # http://localhost:4173
-npm test           # 66 tests: route solver, narration accuracy, tags and hours
+npm test           # 79 tests: route solver, narration accuracy, tags, hours, caching
 npm run probe      # the same pipeline, printed to a terminal
 ```
 
@@ -30,7 +30,11 @@ indistinguishable from "nothing is mapped here" — a timed-out query, which
 carries a `remark`, and a mirror whose database has not finished loading, which
 reports a `timestamp_osm_base` that is not a date. Both are caught and failed
 over rather than cached, because the alternative is telling somebody standing in
-central Bristol that there is nothing around them.
+central Bristol that there is nothing around them. Belt and braces, no empty
+list is ever written to either cache: it is the cheapest answer to ask for
+again and the most expensive one to be wrong about. The cache is also
+generation-stamped, so a fix like that one can abandon the entries a returning
+visitor's browser is still holding rather than waiting out their TTL.
 
 **The story floor** is the part that matters. A typical city-centre query
 returns ~470 mapped objects and roughly 380 of them are dropped before ranking,

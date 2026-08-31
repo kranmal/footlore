@@ -10,7 +10,7 @@
   "scripts": {
     "start": "node server/index.mjs",
     "probe": "node server/probe.mjs",
-    "test": "node solver/test.mjs && node server/narrate.test.mjs && node server/local.test.mjs",
+    "test": "node solver/test.mjs && node server/narrate.test.mjs && node server/local.test.mjs && node server/cache.test.mjs",
     "build:static": "node tools/build-static.mjs"
   }
 }
