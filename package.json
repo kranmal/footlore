@@ -1,0 +1,16 @@
+{
+  "name": "footlore",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A pocket tour guide that reads the ground you're standing on.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server/index.mjs",
+    "probe": "node server/probe.mjs",
+    "test": "node solver/test.mjs && node server/narrate.test.mjs",
+    "build:static": "node tools/build-static.mjs"
+  }
+}

@@ -1,0 +1,769 @@
+<title>Footlore</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --bg:#EFF1EC;
+  --surface:#FFFFFF;
+  --surface-2:#E7EAE3;
+  --ink:#131A17;
+  --muted:#5C6B64;
+  --line:#D6DCD3;
+  --accent:#1F6B52;
+  --accent-soft:#DCEAE2;
+  --amber:#A8700F;
+  --amber-soft:#F2E6CE;
+  --shadow:0 1px 2px rgba(19,26,23,.06), 0 12px 28px rgba(19,26,23,.09);
+  --shadow-sm:0 1px 2px rgba(19,26,23,.05), 0 4px 10px rgba(19,26,23,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1412;
+    --surface:#161E1A;
+    --surface-2:#1D2622;
+    --ink:#E6EDE8;
+    --muted:#93A29A;
+    --line:#28332E;
+    --accent:#56C39A;
+    --accent-soft:#1B3A30;
+    --amber:#E0AC55;
+    --amber-soft:#3A2F1B;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 30px rgba(0,0,0,.42);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.35), 0 4px 10px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1412;
+  --surface:#161E1A;
+  --surface-2:#1D2622;
+  --ink:#E6EDE8;
+  --muted:#93A29A;
+  --line:#28332E;
+  --accent:#56C39A;
+  --accent-soft:#1B3A30;
+  --amber:#E0AC55;
+  --amber-soft:#3A2F1B;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 30px rgba(0,0,0,.42);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.35), 0 4px 10px rgba(0,0,0,.3);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Newsreader",Georgia,"Times New Roman",serif;
+  font-size:18px;
+  line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 28px 96px}
+h1,h2,h3,.display{font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;text-wrap:balance;}
+.mono,.label{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+.label{
+  font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);font-weight:500;
+}
+a{color:var(--accent)}
+
+/* ---------- masthead ---------- */
+header.top{
+  padding:72px 0 40px;
+  border-bottom:1px solid var(--line);
+  display:grid;gap:22px;
+}
+.wordmark{display:flex;align-items:center;gap:12px}
+.pin{width:26px;height:26px;flex:none}
+h1{
+  font-size:clamp(44px,7vw,80px);
+  font-weight:800;letter-spacing:-.03em;line-height:.95;margin:0;
+}
+.standfirst{
+  font-size:clamp(19px,2.2vw,23px);
+  max-width:60ch;color:var(--ink);margin:0;font-weight:300;
+}
+.standfirst em{font-style:italic;color:var(--accent)}
+.metastrip{
+  display:flex;flex-wrap:wrap;gap:10px 26px;padding-top:6px;
+}
+.metastrip div{display:flex;gap:8px;align-items:baseline}
+.metastrip b{font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:500;color:var(--ink)}
+
+/* ---------- sections ---------- */
+section{padding:56px 0;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:0}
+h2{
+  font-size:clamp(26px,3.4vw,34px);font-weight:600;letter-spacing:-.02em;
+  margin:8px 0 6px;
+}
+h3{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:0 0 6px}
+p{margin:0 0 16px;max-width:66ch}
+.lede{color:var(--muted);max-width:64ch;margin-bottom:30px}
+
+/* ---------- mode cards ---------- */
+.modes{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:18px}
+.mode{
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:22px 22px 20px;box-shadow:var(--shadow-sm);display:grid;gap:8px;align-content:start;
+}
+.mode p{margin:0;font-size:16.5px;color:var(--muted);max-width:none}
+.mode .label{color:var(--accent)}
+
+/* ---------- phone mockups ---------- */
+.screens{
+  display:flex;gap:34px;overflow-x:auto;padding:8px 4px 26px;
+  scroll-snap-type:x proximity;
+}
+.screenbox{scroll-snap-align:start;flex:none;width:322px;display:grid;gap:14px}
+.caption{font-size:15.5px;color:var(--muted);max-width:none;margin:0}
+.caption b{color:var(--ink);font-weight:600;font-family:"Bricolage Grotesque",sans-serif}
+
+.phone{
+  width:322px;height:664px;flex:none;
+  background:var(--surface);
+  border:1px solid var(--line);
+  border-radius:34px;
+  box-shadow:var(--shadow);
+  overflow:hidden;position:relative;
+  display:flex;flex-direction:column;
+  font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  font-size:14px;line-height:1.4;
+}
+.status{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:12px 20px 2px;font-size:11px;font-family:"IBM Plex Mono",monospace;color:var(--muted);
+}
+.pheader{padding:10px 18px 12px;display:grid;gap:3px}
+.pheader .now{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.pheader h4{margin:0;font-size:21px;font-weight:600;letter-spacing:-.02em}
+.chips{display:flex;gap:7px;padding:2px 18px 12px;flex-wrap:wrap}
+.chip{
+  font-size:11.5px;padding:5px 11px;border-radius:999px;
+  border:1px solid var(--line);color:var(--muted);background:transparent;white-space:nowrap;
+}
+.chip.on{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
+:root[data-theme="dark"] .chip.on{color:#0E1412}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .chip.on{color:#0E1412}}
+
+.scrollarea{flex:1;overflow:hidden;padding:0 14px;display:grid;gap:10px;align-content:start}
+.card{
+  border:1px solid var(--line);border-radius:13px;background:var(--surface);
+  padding:12px 13px;display:grid;gap:6px;
+}
+.card.raised{box-shadow:var(--shadow-sm)}
+.cardtop{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.cardtop strong{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.dist{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);white-space:nowrap;padding-top:2px}
+.blurb{font-family:"Newsreader",Georgia,serif;font-size:13.5px;line-height:1.45;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tag{
+  font-size:10.5px;font-family:"IBM Plex Mono",monospace;letter-spacing:.04em;
+  padding:3px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted);
+}
+.tag.see{background:var(--accent-soft);color:var(--accent)}
+.tag.eat{background:var(--amber-soft);color:var(--amber)}
+.stars{font-size:11.5px;font-family:"IBM Plex Mono",monospace;color:var(--amber);font-weight:600}
+.open{font-size:11px;color:var(--accent);font-family:"IBM Plex Mono",monospace}
+.shut{font-size:11px;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+
+.tabbar{
+  display:flex;border-top:1px solid var(--line);background:var(--surface);
+  padding:9px 8px 16px;
+}
+.tab{flex:1;display:grid;justify-items:center;gap:4px;font-size:10.5px;color:var(--muted)}
+.tab.on{color:var(--accent);font-weight:600}
+.tab svg{width:19px;height:19px}
+
+/* detail screen */
+.hero{
+  height:186px;position:relative;overflow:hidden;background:var(--surface-2);
+  display:flex;align-items:flex-end;padding:14px;
+}
+.hero h4{margin:0;font-size:25px;font-weight:700;letter-spacing:-.025em;color:#F4F7F2;text-shadow:0 1px 12px rgba(0,0,0,.5)}
+.hero .sub{position:absolute;left:14px;top:14px}
+.backdot{
+  width:30px;height:30px;border-radius:50%;background:rgba(10,16,14,.55);
+  display:grid;place-items:center;color:#F4F7F2;font-size:15px;
+}
+.detailbody{padding:14px 16px;display:grid;gap:12px;overflow:hidden;flex:1;align-content:start}
+.pull{
+  font-family:"Newsreader",Georgia,serif;font-size:15px;line-height:1.5;color:var(--ink);
+}
+.pull .drop{font-size:15px;color:var(--accent);font-weight:600}
+.factgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fact{border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:grid;gap:2px}
+.fact span{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.fact b{font-size:13.5px;font-weight:600}
+.actionbar{display:flex;gap:8px;padding:0 16px 16px}
+.btn{
+  flex:1;text-align:center;padding:11px;border-radius:10px;font-size:13px;font-weight:600;
+  background:var(--accent);color:var(--surface);
+}
+:root[data-theme="dark"] .btn{color:#0E1412}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn{color:#0E1412}}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+
+/* tour screen */
+.tourhead{padding:12px 18px 10px;display:grid;gap:6px}
+.progressline{display:flex;align-items:center;gap:6px;font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
+.bar{flex:1;height:4px;border-radius:2px;background:var(--surface-2);overflow:hidden}
+.bar i{display:block;height:100%;width:38%;background:var(--accent)}
+.stops{padding:4px 16px;display:grid;gap:0;overflow:hidden}
+.stop{display:grid;grid-template-columns:26px 1fr;gap:12px}
+.rail{display:grid;justify-items:center;grid-template-rows:auto 1fr}
+.dot{width:12px;height:12px;border-radius:50%;border:2px solid var(--line);background:var(--surface);margin-top:4px}
+.dot.done{background:var(--accent);border-color:var(--accent)}
+.dot.here{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.line{width:2px;background:var(--line);height:100%;min-height:16px}
+.line.done{background:var(--accent)}
+.stopbody{padding-bottom:16px;display:grid;gap:4px}
+.stopbody strong{font-size:14.5px;font-weight:600}
+.stopbody .meta{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted)}
+.nowplaying{
+  margin:0 14px 12px;border:1px solid var(--accent);background:var(--accent-soft);
+  border-radius:13px;padding:11px 13px;display:grid;gap:7px;
+}
+.nowplaying .label{color:var(--accent)}
+.waveform{display:flex;gap:2px;align-items:flex-end;height:20px}
+.waveform i{flex:1;background:var(--accent);opacity:.55;border-radius:1px}
+
+/* map screen */
+.mapwrap{flex:1;position:relative;overflow:hidden;background:var(--surface-2)}
+.mapwrap svg{position:absolute;inset:0;width:100%;height:100%}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;background:var(--surface);
+  border-top:1px solid var(--line);border-radius:16px 16px 0 0;padding:8px 14px 14px;
+  display:grid;gap:9px;box-shadow:0 -8px 24px rgba(0,0,0,.10);
+}
+.grabber{width:34px;height:4px;border-radius:2px;background:var(--line);justify-self:center}
+.searchbar{
+  position:absolute;top:12px;left:14px;right:14px;background:var(--surface);
+  border:1px solid var(--line);border-radius:11px;padding:9px 12px;
+  font-size:13px;color:var(--muted);box-shadow:var(--shadow-sm);display:flex;gap:8px;align-items:center;
+}
+
+/* ---------- tables & lists ---------- */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:620px;font-size:16px}
+th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+th{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--muted);font-weight:500;
+}
+tr:last-child td{border-bottom:0}
+td.k{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:15.5px;white-space:nowrap}
+td small{display:block;color:var(--muted);font-size:14px;line-height:1.4}
+
+.phases{display:grid;gap:2px;counter-reset:phase}
+.phase{
+  display:grid;grid-template-columns:64px 1fr;gap:20px;padding:20px 0;
+  border-top:1px solid var(--line);
+}
+.phase:first-child{border-top:0}
+.phase .n{
+  font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--muted);padding-top:4px;
+}
+.phase h3{margin-bottom:4px}
+.phase p{margin:0;color:var(--muted);font-size:16.5px}
+.ships{margin-top:8px;display:flex;flex-wrap:wrap;gap:6px}
+.ships span{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;padding:4px 9px;border-radius:6px;
+  background:var(--surface-2);color:var(--muted);
+}
+
+.risks{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.risk{border-left:2px solid var(--amber);padding:2px 0 2px 16px}
+.risk h3{font-size:16.5px}
+.risk p{margin:0;color:var(--muted);font-size:16px}
+
+.rank{display:grid;gap:10px;max-width:640px}
+.rankrow{display:grid;grid-template-columns:150px 1fr 52px;gap:14px;align-items:center}
+.rankrow .name{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:15px}
+.meter{height:9px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+.meter i{display:block;height:100%;background:var(--accent);border-radius:5px}
+.meter i.amberfill{background:var(--amber)}
+.rankrow .pct{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+
+footer{padding:44px 0 0;color:var(--muted);font-size:15.5px}
+
+@media (max-width:640px){
+  .wrap{padding:0 18px 72px}
+  .phase{grid-template-columns:1fr;gap:6px}
+  .rankrow{grid-template-columns:110px 1fr 46px}
+}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="wordmark">
+    <svg class="pin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M12 21.5s7-6.1 7-11.2A7 7 0 0 0 5 10.3c0 5.1 7 11.2 7 11.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <circle cx="12" cy="10" r="2.4" fill="currentColor"/>
+    </svg>
+    <span class="label">Product plan &middot; draft interfaces</span>
+  </div>
+  <h1>Footlore</h1>
+  <p class="standfirst">A pocket tour guide that reads the ground you're standing on. It knows the <em>story</em> of the building across the street and the <em>best plate of food</em> within a ten-minute walk — and it can stitch both into an afternoon.</p>
+  <div class="metastrip">
+    <div><span class="label">Platform</span><b>Web first &rarr; SwiftUI</b></div>
+    <div><span class="label">Sights</span><b>OSM + Wikipedia</b></div>
+    <div><span class="label">Food</span><b>Google Places</b></div>
+    <div><span class="label">Narration</span><b>Claude</b></div>
+  </div>
+</header>
+
+<section>
+  <span class="label">The bet</span>
+  <h2>Search apps answer questions. A guide volunteers things.</h2>
+  <p class="lede">Maps and review apps are excellent when you already know what you're looking for. They're useless at the thing a good human guide does constantly: noticing that the unremarkable arch you just walked past is 700 years old, and that the place doing the best thing on this street has no queue right now.</p>
+  <p>Footlore's job is to be worth opening when you have <em>no query</em>. That sets three hard product rules: it must say something interesting within two seconds of launch, it must never show a wall of undifferentiated pins, and every item has to justify itself in one sentence a person would actually repeat out loud.</p>
+</section>
+
+<section>
+  <span class="label">Three ways in</span>
+  <h2>One place graph, three postures</h2>
+  <p class="lede">Same data underneath; the difference is how much time the person has and how much they want to be led.</p>
+  <div class="modes">
+    <div class="mode">
+      <span class="label">Standing still</span>
+      <h3>Nearby feed</h3>
+      <p>The default launch state. A ranked, mixed feed of sights and food within a walkable radius, each with a one-line reason. For the ten minutes between things.</p>
+    </div>
+    <div class="mode">
+      <span class="label">Time to spare</span>
+      <h3>Guided walk</h3>
+      <p>Four to six stops routed into a loop that lands you at a good dinner. Narration triggers on arrival; skipping a stop reroutes the rest.</p>
+    </div>
+    <div class="mode">
+      <span class="label">Getting oriented</span>
+      <h3>Map view</h3>
+      <p>For the "what's over there?" question. Pins carry meaning — sights and food are visually distinct, and low-signal noise is filtered out entirely.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="label">Draft interfaces</span>
+  <h2>Four screens</h2>
+  <p class="lede">Mobile-web mockups, real content, Bristol Old City as the test location. Scroll sideways.</p>
+
+  <div class="screens">
+
+    <!-- ============ 1. NEARBY FEED ============ -->
+    <div class="screenbox">
+      <div class="phone">
+        <div class="status"><span>9:41</span><span>&#9679;&#9679;&#9679; &#9646;</span></div>
+        <div class="pheader">
+          <span class="now">Old City &middot; clear, 17&deg;</span>
+          <h4>Around you now</h4>
+        </div>
+        <div class="chips">
+          <span class="chip on">All</span>
+          <span class="chip">See</span>
+          <span class="chip">Eat</span>
+          <span class="chip">Open now</span>
+          <span class="chip">5 min</span>
+        </div>
+        <div class="scrollarea">
+          <div class="card raised">
+            <div class="cardtop">
+              <strong>St John on the Wall</strong>
+              <span class="dist">90 m</span>
+            </div>
+            <p class="blurb">The last surviving gate of the medieval city wall — and the only church in England still built into one.</p>
+            <div class="row">
+              <span class="tag see">MEDIEVAL</span>
+              <span class="tag">2 min read</span>
+              <span class="open">Open &middot; free</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardtop">
+              <strong>St Nicholas Market</strong>
+              <span class="dist">140 m</span>
+            </div>
+            <p class="blurb">Georgian glass arcade, 60-odd traders. The falafel counter has a queue for a reason.</p>
+            <div class="row">
+              <span class="tag eat">MARKET</span>
+              <span class="stars">4.6 &middot; 12k</span>
+              <span class="open">Closes 17:00</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardtop">
+              <strong>Bianchis</strong>
+              <span class="dist">310 m &middot; 4 min</span>
+            </div>
+            <p class="blurb">Tiny Italian counter, hand-rolled pasta, no bookings after six. Highest-rated within ten minutes of you.</p>
+            <div class="row">
+              <span class="tag eat">ITALIAN &middot; ££</span>
+              <span class="stars">4.8 &middot; 1.4k</span>
+              <span class="shut">Opens 17:30</span>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="cardtop">
+              <strong>Queen Square</strong>
+              <span class="dist">420 m</span>
+            </div>
+            <p class="blurb">Burned in the 1831 riots, then cut in half by a dual carriageway until 1999. The lawn is a restoration.</p>
+            <div class="row">
+              <span class="tag see">HISTORY</span>
+              <span class="tag">3 min read</span>
+            </div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab on">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M4 12h16M4 18h10"/></svg>
+            Nearby
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 4 3 6.5v13L9 17l6 3 6-2.5v-13L15 7 9 4Z" stroke-linejoin="round"/><path d="M9 4v13M15 7v13"/></svg>
+            Map
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 20c0-3 2-4 3-6s-1-4 1-6 4-1 5 1 1 4-1 6-3 3-3 5" stroke-linecap="round"/><circle cx="7" cy="20" r="1.6" fill="currentColor" stroke="none"/></svg>
+            Walks
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 4h12v16l-6-4-6 4V4Z" stroke-linejoin="round"/></svg>
+            Saved
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b>Nearby feed.</b> Sights and food interleave in one ranked list — separating them into tabs makes the app a directory again. Every card leads with the reason, not the category.</p>
+    </div>
+
+    <!-- ============ 2. PLACE DETAIL ============ -->
+    <div class="screenbox">
+      <div class="phone">
+        <div class="hero">
+          <svg viewBox="0 0 322 186" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%" aria-hidden="true">
+            <defs>
+              <linearGradient id="hg" x1="0" y1="0" x2="0.3" y2="1">
+                <stop offset="0" stop-color="#2E5346"/><stop offset="1" stop-color="#101B16"/>
+              </linearGradient>
+            </defs>
+            <rect width="322" height="186" fill="url(#hg)"/>
+            <g opacity=".38" fill="#CFE0D5">
+              <rect x="34" y="70" width="52" height="116"/>
+              <rect x="96" y="46" width="34" height="140"/>
+              <path d="M113 46 L96 46 L113 18 L130 46 Z"/>
+              <rect x="140" y="82" width="70" height="104"/>
+              <rect x="220" y="60" width="62" height="126"/>
+            </g>
+            <g opacity=".5" fill="#0B120F">
+              <rect x="150" y="96" width="12" height="20" rx="6"/>
+              <rect x="172" y="96" width="12" height="20" rx="6"/>
+              <rect x="194" y="96" width="12" height="20" rx="6"/>
+            </g>
+            <rect width="322" height="186" fill="url(#fade)"/>
+            <defs><linearGradient id="fade" x1="0" y1="0.45" x2="0" y2="1"><stop offset="0" stop-color="#0B120F" stop-opacity="0"/><stop offset="1" stop-color="#0B120F" stop-opacity=".85"/></linearGradient></defs>
+          </svg>
+          <div class="sub"><div class="backdot">&#8249;</div></div>
+          <h4>St John on the Wall</h4>
+        </div>
+        <div class="detailbody">
+          <div class="row">
+            <span class="tag see">MEDIEVAL</span>
+            <span class="tag">90 m &middot; 1 min</span>
+            <span class="open">Open &middot; free entry</span>
+          </div>
+          <p class="pull"><span class="drop">Bristol had five city gates.</span> Four were pulled down as the wagons got wider. This one survived because a church was sitting on top of it — demolishing the arch would have meant demolishing the parish, and nobody fancied the paperwork.</p>
+          <p class="pull" style="color:var(--muted);font-size:14px">Below it runs a crypt and a well that supplied travellers leaving the walled city. The building has been essentially unaltered since 1350.</p>
+          <div class="factgrid">
+            <div class="fact"><span>Built</span><b>c. 1350</b></div>
+            <div class="fact"><span>Listing</span><b>Grade I</b></div>
+            <div class="fact"><span>Visit</span><b>15 min</b></div>
+            <div class="fact"><span>Source</span><b>Wikipedia</b></div>
+          </div>
+        </div>
+        <div class="actionbar">
+          <div class="btn">&#9654; Play (2 min)</div>
+          <div class="btn ghost">Add to walk</div>
+        </div>
+      </div>
+      <p class="caption"><b>Place detail.</b> The narration is written to be heard, not skimmed — one hook sentence, one payoff, then the facts as a scannable grid. Audio is a peer of the text, not a buried extra.</p>
+    </div>
+
+    <!-- ============ 3. GUIDED WALK ============ -->
+    <div class="screenbox">
+      <div class="phone">
+        <div class="status"><span>14:06</span><span>&#9679;&#9679;&#9679; &#9646;</span></div>
+        <div class="tourhead">
+          <span class="now" style="font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)">Walk &middot; Old City loop</span>
+          <h4 style="margin:0;font-size:20px;font-weight:600;letter-spacing:-.02em">Merchants, ships &amp; lunch</h4>
+          <div class="progressline">
+            <span>2 / 6</span>
+            <span class="bar"><i></i></span>
+            <span>1.4 km &middot; 48 min left</span>
+          </div>
+        </div>
+
+        <div class="nowplaying">
+          <span class="label">Now &middot; you're here</span>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+            <strong style="font-size:15px">The Exchange</strong>
+            <span class="dist">arrived 14:04</span>
+          </div>
+          <div class="waveform">
+            <i style="height:35%"></i><i style="height:70%"></i><i style="height:100%"></i><i style="height:55%"></i><i style="height:85%"></i><i style="height:40%"></i><i style="height:65%"></i><i style="height:95%"></i><i style="height:45%"></i><i style="height:75%"></i><i style="height:30%"></i><i style="height:60%"></i><i style="height:88%"></i><i style="height:50%"></i><i style="height:72%"></i><i style="height:38%"></i><i style="height:62%"></i><i style="height:25%"></i>
+          </div>
+          <div class="blurb" style="color:var(--ink)">"The four brass pillars outside are called nails. Pay <em>on the nail</em> was invented right where you're standing."</div>
+        </div>
+
+        <div class="stops">
+          <div class="stop">
+            <div class="rail"><div class="dot done"></div><div class="line done"></div></div>
+            <div class="stopbody">
+              <strong style="color:var(--muted)">St John on the Wall</strong>
+              <span class="meta">Heard &middot; 13:52</span>
+            </div>
+          </div>
+          <div class="stop">
+            <div class="rail"><div class="dot here"></div><div class="line"></div></div>
+            <div class="stopbody">
+              <strong>The Exchange &amp; the Nails</strong>
+              <span class="meta">Playing &middot; 1:12 / 2:30</span>
+            </div>
+          </div>
+          <div class="stop">
+            <div class="rail"><div class="dot"></div><div class="line"></div></div>
+            <div class="stopbody">
+              <strong>St Nicholas Market</strong>
+              <span class="meta">220 m &middot; next stop</span>
+            </div>
+          </div>
+          <div class="stop">
+            <div class="rail"><div class="dot"></div></div>
+            <div class="stopbody">
+              <strong>Lunch &mdash; Bianchis</strong>
+              <span class="meta">4.8 &middot; table held to 15:15</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="actionbar" style="padding-top:4px">
+          <div class="btn ghost">Skip stop</div>
+          <div class="btn">Directions</div>
+        </div>
+      </div>
+      <p class="caption"><b>Guided walk.</b> The walk is a timeline, not a map — position on the list is the primary feedback. Food is a scheduled stop with the others, which is what makes it feel like a day out rather than a search result.</p>
+    </div>
+
+    <!-- ============ 4. MAP ============ -->
+    <div class="screenbox">
+      <div class="phone">
+        <div class="mapwrap">
+          <svg viewBox="0 0 322 470" aria-hidden="true">
+            <rect width="322" height="470" fill="var(--surface-2)"/>
+            <!-- river -->
+            <path d="M-10 360 C 60 330, 120 400, 200 372 S 300 330, 340 350 L340 470 L-10 470 Z" fill="var(--accent-soft)" opacity=".85"/>
+            <!-- blocks -->
+            <g fill="var(--surface)" opacity=".9">
+              <rect x="18" y="40" width="86" height="70" rx="3"/>
+              <rect x="118" y="26" width="70" height="58" rx="3"/>
+              <rect x="204" y="40" width="94" height="70" rx="3"/>
+              <rect x="18" y="128" width="70" height="86" rx="3"/>
+              <rect x="104" y="100" width="84" height="60" rx="3"/>
+              <rect x="204" y="128" width="94" height="90" rx="3"/>
+              <rect x="30" y="232" width="96" height="74" rx="3"/>
+              <rect x="146" y="178" width="42" height="128" rx="3"/>
+              <rect x="206" y="238" width="80" height="66" rx="3"/>
+            </g>
+            <!-- route -->
+            <path d="M62 96 L150 96 L150 172 L232 172 L232 250" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-dasharray="1 6" stroke-linecap="round" opacity=".75"/>
+            <!-- user -->
+            <circle cx="150" cy="172" r="16" fill="var(--accent)" opacity=".16"/>
+            <circle cx="150" cy="172" r="6" fill="var(--accent)" stroke="var(--surface)" stroke-width="2.5"/>
+            <!-- see pins -->
+            <g>
+              <circle cx="62" cy="96" r="11" fill="var(--accent)"/>
+              <path d="M58.5 96 l2.6 2.6 4.4 -5" stroke="var(--surface)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+              <circle cx="248" cy="72" r="11" fill="var(--accent)"/>
+              <circle cx="248" cy="72" r="3" fill="var(--surface)"/>
+              <circle cx="70" cy="264" r="11" fill="var(--accent)"/>
+              <circle cx="70" cy="264" r="3" fill="var(--surface)"/>
+            </g>
+            <!-- eat pins -->
+            <g>
+              <circle cx="232" cy="250" r="11" fill="var(--amber)"/>
+              <rect x="229.5" y="245" width="1.8" height="10" rx=".9" fill="var(--surface)"/>
+              <rect x="233.5" y="245" width="1.8" height="10" rx=".9" fill="var(--surface)"/>
+              <circle cx="128" cy="286" r="11" fill="var(--amber)"/>
+              <rect x="125.5" y="281" width="1.8" height="10" rx=".9" fill="var(--surface)"/>
+              <rect x="129.5" y="281" width="1.8" height="10" rx=".9" fill="var(--surface)"/>
+            </g>
+          </svg>
+          <div class="searchbar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" style="width:15px;height:15px"><circle cx="11" cy="11" r="6.5"/><path d="m16 16 4 4" stroke-linecap="round"/></svg>
+            Old City, Bristol
+          </div>
+          <div class="chips" style="position:absolute;top:56px;left:0;right:0">
+            <span class="chip on" style="background:var(--surface);border-color:var(--accent);color:var(--accent)">&#9679; See 12</span>
+            <span class="chip" style="background:var(--surface)">&#9679; Eat 8</span>
+            <span class="chip" style="background:var(--surface)">Open now</span>
+          </div>
+          <div class="sheet">
+            <div class="grabber"></div>
+            <div class="cardtop">
+              <strong style="font-size:15.5px">Bianchis</strong>
+              <span class="dist">310 m &middot; 4 min</span>
+            </div>
+            <p class="blurb" style="margin:0">Hand-rolled pasta, twelve covers, no bookings after six. The best-rated kitchen inside your walking radius.</p>
+            <div class="row">
+              <span class="tag eat">ITALIAN &middot; ££</span>
+              <span class="stars">4.8 &middot; 1.4k</span>
+              <span class="shut">Opens 17:30</span>
+            </div>
+            <div class="actionbar" style="padding:2px 0 0">
+              <div class="btn ghost">Details</div>
+              <div class="btn">Add to walk</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b>Map view.</b> Two pin colours only — green for sights, amber for food — and a cap on visible pins so the map never turns to confetti. The dotted line is the active walk, not turn-by-turn navigation.</p>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <span class="label">Ranking</span>
+  <h2>What makes something worth interrupting you for</h2>
+  <p class="lede">A single score decides feed order for both sights and food, so the two can share one list. Weights differ by category — a landmark doesn't need a rating, a restaurant does.</p>
+  <div class="rank">
+    <div class="rankrow"><span class="name">Walk time</span><span class="meter"><i style="width:30%"></i></span><span class="pct">30%</span></div>
+    <div class="rankrow"><span class="name">Story strength</span><span class="meter"><i style="width:25%"></i></span><span class="pct">25%</span></div>
+    <div class="rankrow"><span class="name">Rating &amp; volume</span><span class="meter"><i class="amberfill" style="width:20%"></i></span><span class="pct">20%</span></div>
+    <div class="rankrow"><span class="name">Open right now</span><span class="meter"><i style="width:15%"></i></span><span class="pct">15%</span></div>
+    <div class="rankrow"><span class="name">Not seen before</span><span class="meter"><i style="width:10%"></i></span><span class="pct">10%</span></div>
+  </div>
+  <p style="margin-top:24px">"Story strength" is the interesting one and the part that has to be built, not bought: a heritage listing, a long Wikipedia article, or a dense OSM tag set all suggest there's something to say. Everything below a floor gets dropped rather than shown weakly — an empty feed with three great things beats a full one with twenty bus stops.</p>
+</section>
+
+<section>
+  <span class="label">Data</span>
+  <h2>Free where history lives, paid only where ratings matter</h2>
+  <p class="lede">The hybrid split keeps per-user cost near zero for the sightseeing half, which is the half people open the app for.</p>
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr><th>Source</th><th>Gives you</th><th>Cost &amp; constraints</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="k">Overpass / OSM</td>
+          <td>Landmarks, monuments, historic tags, viewpoints, park geometry<small>Queried by bounding box around the user</small></td>
+          <td>Free, ODbL attribution required<small>Public endpoint is rate-limited and occasionally slow — self-host or cache tiles of results server-side</small></td>
+        </tr>
+        <tr>
+          <td class="k">Wikipedia / Wikidata</td>
+          <td>The actual story: article extracts, dates, images<small>Linked from OSM's <code>wikidata=</code> tag, so the join is already done</small></td>
+          <td>Free, CC BY-SA<small>Attribution and share-alike apply to text you reuse verbatim</small></td>
+        </tr>
+        <tr>
+          <td class="k">Google Places</td>
+          <td>Restaurants, ratings, review counts, opening hours, price level, photos</td>
+          <td>Paid per request<small>Caching of most fields is limited to 30 days and place IDs must be refreshed; ratings must be shown with Google attribution</small></td>
+        </tr>
+        <tr>
+          <td class="k">Claude</td>
+          <td>Narration: turns raw extracts into 90-second spoken pieces with a hook<small>Also writes the one-line reason on each feed card</small></td>
+          <td>Paid per generation<small>Generate once per place and cache permanently — the story doesn't change</small></td>
+        </tr>
+        <tr>
+          <td class="k">Device</td>
+          <td>Position, heading, arrival triggers<small>Geolocation API on web; CoreLocation region monitoring on iOS</small></td>
+          <td>Free<small>Background arrival triggers are the one thing the web build genuinely can't do</small></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:22px"><b>The one architectural decision that matters:</b> the client never calls a provider directly. A thin backend does the fan-out, joins OSM to Wikipedia to Places, caches by geohash tile, and returns one clean <code>Place</code> shape. That keeps the keys off the device, makes the paid calls controllable, and means the SwiftUI app later is a new front end rather than a second integration.</p>
+</section>
+
+<section>
+  <span class="label">Sequence</span>
+  <h2>Build order</h2>
+  <p class="lede">Each phase is usable on its own, and each one tests a different assumption.</p>
+  <div class="phases">
+    <div class="phase">
+      <div class="n">01</div>
+      <div>
+        <h3>Nearby, sights only</h3>
+        <p>Web app, geolocation, Overpass query, Wikipedia join, Claude blurbs, cached server-side. No food, no map, no accounts. Answers the only question that matters: <em>is the feed interesting?</em></p>
+        <div class="ships"><span>Next.js</span><span>Feed + detail</span><span>Geohash cache</span></div>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="n">02</div>
+      <div>
+        <h3>Food layer</h3>
+        <p>Google Places behind the same backend, merged into one ranked feed. Attribution and cache rules implemented properly here rather than retrofitted.</p>
+        <div class="ships"><span>Places API</span><span>Unified ranking</span><span>Open-now filter</span></div>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="n">03</div>
+      <div>
+        <h3>Map view</h3>
+        <p>MapLibre with OSM tiles. Pin capping and clustering, the sheet interaction, filters shared with the feed.</p>
+        <div class="ships"><span>MapLibre GL</span><span>Bottom sheet</span></div>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="n">04</div>
+      <div>
+        <h3>Walks</h3>
+        <p>Route generation across 4–6 stops with a food stop timed to arrive hungry, plus the timeline UI and foreground arrival detection. The hardest and most differentiating piece — deliberately last on web.</p>
+        <div class="ships"><span>Routing</span><span>Stop sequencing</span><span>Arrival triggers</span></div>
+      </div>
+    </div>
+    <div class="phase">
+      <div class="n">05</div>
+      <div>
+        <h3>SwiftUI app</h3>
+        <p>Same backend, native shell. This is where walks actually come alive: background region monitoring, offline-cached walks, audio that keeps playing with the screen off.</p>
+        <div class="ships"><span>MapKit</span><span>CoreLocation regions</span><span>AVAudioSession</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="label">Known risks</span>
+  <h2>What could sink it</h2>
+  <div class="risks">
+    <div class="risk">
+      <h3>Rural emptiness</h3>
+      <p>OSM density collapses outside cities. Needs an honest empty state that widens the radius and says so, rather than padding the feed with petrol stations.</p>
+    </div>
+    <div class="risk">
+      <h3>Narration that reads as filler</h3>
+      <p>Generated blurbs with nothing to work from are the fastest way to lose trust. Hard rule: no source material above the story-strength floor, no card.</p>
+    </div>
+    <div class="risk">
+      <h3>Places cost curve</h3>
+      <p>Cheap for one user, alarming at scale if every pan and filter triggers a request. Tile-and-cache at the backend, and only request food fields on demand.</p>
+    </div>
+    <div class="risk">
+      <h3>Battery and background</h3>
+      <p>Continuous GPS on a two-hour walk is brutal. Coarse updates plus region monitoring at stop boundaries, never a live high-accuracy stream.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Draft one. Nothing here is built yet — the point is to argue with the screens before writing the code. Place data in the mockups is illustrative.</p>
+</footer>
+
+</div>

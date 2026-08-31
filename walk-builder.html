@@ -1,0 +1,849 @@
+<title>Footlore Walk Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,600;1,6..72,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+:root{
+  --bg:#EFF1EC;
+  --surface:#FFFFFF;
+  --surface-2:#E7EAE3;
+  --ink:#131A17;
+  --muted:#5C6B64;
+  --line:#D6DCD3;
+  --accent:#1F6B52;
+  --accent-soft:#DCEAE2;
+  --amber:#A8700F;
+  --amber-soft:#F2E6CE;
+  --alert:#9C3A22;
+  --alert-soft:#F5DED6;
+  --shadow:0 1px 2px rgba(19,26,23,.06), 0 12px 28px rgba(19,26,23,.09);
+  --shadow-sm:0 1px 2px rgba(19,26,23,.05), 0 4px 10px rgba(19,26,23,.05);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E1412;
+    --surface:#161E1A;
+    --surface-2:#1D2622;
+    --ink:#E6EDE8;
+    --muted:#93A29A;
+    --line:#28332E;
+    --accent:#56C39A;
+    --accent-soft:#1B3A30;
+    --amber:#E0AC55;
+    --amber-soft:#3A2F1B;
+    --alert:#E58163;
+    --alert-soft:#3D2018;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 30px rgba(0,0,0,.42);
+    --shadow-sm:0 1px 2px rgba(0,0,0,.35), 0 4px 10px rgba(0,0,0,.3);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E1412;
+  --surface:#161E1A;
+  --surface-2:#1D2622;
+  --ink:#E6EDE8;
+  --muted:#93A29A;
+  --line:#28332E;
+  --accent:#56C39A;
+  --accent-soft:#1B3A30;
+  --amber:#E0AC55;
+  --amber-soft:#3A2F1B;
+  --alert:#E58163;
+  --alert-soft:#3D2018;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 30px rgba(0,0,0,.42);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.35), 0 4px 10px rgba(0,0,0,.3);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:"Newsreader",Georgia,"Times New Roman",serif;
+  font-size:18px;line-height:1.65;-webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1120px;margin:0 auto;padding:0 28px 96px}
+h1,h2,h3,h4,.display{font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;text-wrap:balance}
+.mono,.label{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+.label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:500}
+code{font-family:"IBM Plex Mono",monospace;font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:4px}
+
+header.top{padding:66px 0 38px;border-bottom:1px solid var(--line);display:grid;gap:20px}
+.crumb{display:flex;align-items:center;gap:10px}
+h1{font-size:clamp(38px,6vw,66px);font-weight:800;letter-spacing:-.03em;line-height:.98;margin:0}
+.standfirst{font-size:clamp(19px,2.2vw,23px);max-width:62ch;margin:0;font-weight:300}
+.standfirst em{font-style:italic;color:var(--accent)}
+
+section{padding:54px 0;border-bottom:1px solid var(--line)}
+section:last-of-type{border-bottom:0}
+h2{font-size:clamp(25px,3.3vw,33px);font-weight:600;letter-spacing:-.02em;margin:8px 0 6px}
+h3{font-size:19px;font-weight:600;letter-spacing:-.01em;margin:0 0 6px}
+p{margin:0 0 16px;max-width:66ch}
+.lede{color:var(--muted);max-width:64ch;margin-bottom:30px}
+
+/* ---- principles ---- */
+.rules{display:grid;gap:0}
+.rule{display:grid;grid-template-columns:minmax(180px,240px) 1fr;gap:28px;padding:22px 0;border-top:1px solid var(--line)}
+.rule:first-child{border-top:0}
+.rule h3{margin:0;font-size:18px}
+.rule p{margin:0;color:var(--muted);font-size:16.5px;max-width:60ch}
+
+/* ---- phones ---- */
+.screens{display:flex;gap:34px;overflow-x:auto;padding:8px 4px 26px;scroll-snap-type:x proximity}
+.screenbox{scroll-snap-align:start;flex:none;width:322px;display:grid;gap:14px}
+.caption{font-size:15.5px;color:var(--muted);margin:0}
+.caption b{color:var(--ink);font-weight:600;font-family:"Bricolage Grotesque",sans-serif}
+.phone{
+  width:322px;height:686px;flex:none;background:var(--surface);
+  border:1px solid var(--line);border-radius:34px;box-shadow:var(--shadow);
+  overflow:hidden;position:relative;display:flex;flex-direction:column;
+  font-family:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;font-size:14px;line-height:1.4;
+}
+.status{display:flex;justify-content:space-between;align-items:center;padding:12px 20px 2px;font-size:11px;font-family:"IBM Plex Mono",monospace;color:var(--muted)}
+.pheader{padding:8px 18px 10px;display:grid;gap:3px}
+.pheader .now{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.pheader h4{margin:0;font-size:21px;font-weight:600;letter-spacing:-.02em}
+.pbody{flex:1;overflow:hidden;padding:0 16px;display:grid;gap:14px;align-content:start}
+.dist,.meta{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted)}
+.blurb{font-family:"Newsreader",Georgia,serif;font-size:13.5px;line-height:1.45;color:var(--muted)}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tag{font-size:10.5px;font-family:"IBM Plex Mono",monospace;letter-spacing:.04em;padding:3px 7px;border-radius:5px;background:var(--surface-2);color:var(--muted)}
+.tag.see{background:var(--accent-soft);color:var(--accent)}
+.tag.eat{background:var(--amber-soft);color:var(--amber)}
+.stars{font-size:11.5px;font-family:"IBM Plex Mono",monospace;color:var(--amber);font-weight:600}
+.btn{flex:1;text-align:center;padding:12px;border-radius:10px;font-size:13.5px;font-weight:600;background:var(--accent);color:var(--surface)}
+:root[data-theme="dark"] .btn{color:#0E1412}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn{color:#0E1412}}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--ink)}
+.actionbar{display:flex;gap:8px;padding:12px 16px 18px}
+
+/* setup screen */
+.field{display:grid;gap:8px}
+.field .q{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.scrub{display:flex;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.scrub span{flex:1;text-align:center;padding:9px 0;font-size:12px;font-family:"IBM Plex Mono",monospace;color:var(--muted);border-right:1px solid var(--line)}
+.scrub span:last-child{border-right:0}
+.scrub span.on{background:var(--accent);color:var(--surface);font-weight:600}
+:root[data-theme="dark"] .scrub span.on{color:#0E1412}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .scrub span.on{color:#0E1412}}
+.pillrow{display:flex;flex-wrap:wrap;gap:7px}
+.pill{font-size:12px;padding:7px 12px;border-radius:999px;border:1px solid var(--line);color:var(--muted)}
+.pill.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent);font-weight:600}
+.toggleline{display:flex;justify-content:space-between;align-items:center;gap:12px;border:1px solid var(--line);border-radius:11px;padding:12px 13px}
+.tog{width:40px;height:23px;border-radius:999px;background:var(--accent);position:relative;flex:none}
+.tog i{position:absolute;top:2.5px;right:2.5px;width:18px;height:18px;border-radius:50%;background:var(--surface)}
+.tog.off{background:var(--surface-2)}
+.tog.off i{left:2.5px;right:auto;background:var(--muted)}
+.subline{font-size:11.5px;color:var(--muted);font-family:"IBM Plex Mono",monospace;margin-top:3px}
+.endpick{display:flex;gap:8px}
+.endpick div{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 11px;display:grid;gap:2px}
+.endpick div.on{border-color:var(--accent);background:var(--accent-soft)}
+.endpick strong{font-size:12.5px;font-weight:600}
+.endpick span{font-size:10.5px;color:var(--muted);font-family:"IBM Plex Mono",monospace}
+.endpick div.on strong,.endpick div.on span{color:var(--accent)}
+
+/* ribbon */
+.ribbonbox{display:grid;gap:7px}
+.ribbon{display:flex;height:26px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.ribbon i{display:block;height:100%}
+.ribbon i.walk{background:repeating-linear-gradient(135deg,var(--surface-2),var(--surface-2) 3px,var(--surface) 3px,var(--surface) 6px)}
+.ribbon i.stop{background:var(--accent);opacity:.85}
+.ribbon i.meal{background:var(--amber)}
+.ribbonkey{display:flex;gap:12px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted);flex-wrap:wrap}
+.ribbonkey span{display:flex;align-items:center;gap:5px}
+.sw{width:9px;height:9px;border-radius:2px;display:inline-block}
+.sw.walk{background:var(--surface-2);border:1px solid var(--line)}
+.sw.stop{background:var(--accent)}
+.sw.meal{background:var(--amber)}
+
+/* stop rows */
+.stoplist{display:grid;gap:7px}
+.srow{
+  border:1px solid var(--line);border-radius:12px;padding:10px 11px;
+  display:grid;grid-template-columns:22px 1fr auto;gap:10px;align-items:start;background:var(--surface);
+}
+.srow.meal{border-color:var(--amber);background:var(--amber-soft)}
+.srow.locked{background:var(--accent-soft);border-color:var(--accent)}
+.snum{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);padding-top:2px}
+.sbody{display:grid;gap:3px;min-width:0}
+.sbody strong{font-size:14px;font-weight:600;letter-spacing:-.01em}
+.sbody .why{font-family:"Newsreader",Georgia,serif;font-size:12.5px;line-height:1.35;color:var(--muted)}
+.sright{display:grid;justify-items:end;gap:5px}
+.mins{font-family:"IBM Plex Mono",monospace;font-size:11.5px;font-weight:500;font-variant-numeric:tabular-nums}
+.icobtn{width:22px;height:22px;border-radius:6px;border:1px solid var(--line);display:grid;place-items:center;color:var(--muted)}
+.icobtn svg{width:12px;height:12px}
+.lockon{color:var(--accent);border-color:var(--accent)}
+.walkgap{display:flex;align-items:center;gap:7px;padding-left:32px;font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--muted)}
+.walkgap .dash{flex:1;height:1px;background:repeating-linear-gradient(90deg,var(--line),var(--line) 3px,transparent 3px,transparent 6px)}
+
+/* swap sheet */
+.dim{position:absolute;inset:0;background:rgba(10,16,14,.45)}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;background:var(--surface);
+  border-top:1px solid var(--line);border-radius:18px 18px 0 0;padding:9px 16px 18px;
+  display:grid;gap:11px;box-shadow:0 -10px 30px rgba(0,0,0,.18);
+}
+.grabber{width:34px;height:4px;border-radius:2px;background:var(--line);justify-self:center}
+.alt{border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:5px}
+.alt.pick{border-color:var(--accent);background:var(--accent-soft)}
+.altop{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.altop strong{font-size:14px;font-weight:600}
+.delta{font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;white-space:nowrap}
+.delta.plus{color:var(--amber)}
+.delta.minus{color:var(--accent)}
+.dots{display:flex;gap:3px;align-items:center}
+.dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}
+.dots i.f{background:var(--accent)}
+
+/* late banner */
+.banner{
+  border:1px solid var(--alert);background:var(--alert-soft);border-radius:13px;
+  padding:12px 13px;display:grid;gap:9px;
+}
+.banner .label{color:var(--alert)}
+.banner h5{margin:0;font-size:15px;font-weight:600;font-family:"Bricolage Grotesque",sans-serif}
+.choice{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 11px;display:flex;justify-content:space-between;gap:10px;align-items:center}
+.choice strong{font-size:13px;font-weight:600}
+.choice span{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--muted);white-space:nowrap}
+.overbar{display:flex;height:22px;border-radius:6px;overflow:hidden;border:1px solid var(--line)}
+.overbar i.over{background:var(--alert);opacity:.85}
+
+/* tables / lists */
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:16px}
+th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:500}
+tr:last-child td{border-bottom:0}
+td.k{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:15.5px;white-space:nowrap}
+td small{display:block;color:var(--muted);font-size:14px;line-height:1.45}
+
+.steps{display:grid;gap:0}
+.step{display:grid;grid-template-columns:76px 1fr;gap:22px;padding:20px 0;border-top:1px solid var(--line)}
+.step:first-child{border-top:0}
+.step .n{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);padding-top:5px;letter-spacing:.06em}
+.step p{margin:0;color:var(--muted);font-size:16.5px}
+.step p + p{margin-top:8px}
+
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:20px}
+.card2{border:1px solid var(--line);background:var(--surface);border-radius:13px;padding:20px;display:grid;gap:7px;box-shadow:var(--shadow-sm);align-content:start}
+.card2 p{margin:0;color:var(--muted);font-size:16px;max-width:none}
+.card2 .label{color:var(--amber)}
+
+
+/* ---- settled / code ---- */
+.term{
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;
+  overflow-x:auto;box-shadow:var(--shadow-sm);
+}
+.termbar{
+  display:flex;align-items:center;gap:8px;padding:9px 14px;border-bottom:1px solid var(--line);
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--muted);position:sticky;left:0;
+}
+.termbar b{color:var(--ink);font-weight:500}
+.term pre{
+  margin:0;padding:14px 16px 18px;font-family:"IBM Plex Mono",monospace;
+  font-size:12.5px;line-height:1.62;color:var(--muted);white-space:pre;
+}
+.term pre .ok{color:var(--accent);font-weight:600}
+.term pre .hd{color:var(--ink);font-weight:600}
+.term pre .tot{color:var(--accent);font-weight:600}
+.finding{
+  border:1px solid var(--amber);background:var(--amber-soft);border-radius:13px;
+  padding:20px 22px;display:grid;gap:8px;margin:26px 0 0;
+}
+.finding .label{color:var(--amber)}
+.finding p{margin:0;max-width:62ch}
+.filelist{display:grid;gap:0;margin-top:8px}
+.filerow{display:grid;grid-template-columns:170px 1fr;gap:20px;padding:11px 0;border-top:1px solid var(--line);align-items:baseline}
+.filerow:first-child{border-top:0}
+.filerow code{background:transparent;padding:0;font-size:13.5px;color:var(--ink);font-weight:500}
+.filerow span{color:var(--muted);font-size:16px}
+footer{padding:42px 0 0;color:var(--muted);font-size:15.5px}
+
+@media (max-width:640px){
+  .wrap{padding:0 18px 72px}
+  .rule,.step{grid-template-columns:1fr;gap:6px}
+}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="crumb">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden="true" style="color:var(--accent)">
+      <path d="M12 21.5s7-6.1 7-11.2A7 7 0 0 0 5 10.3c0 5.1 7 11.2 7 11.2Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
+      <circle cx="12" cy="10" r="2.4" fill="currentColor"/>
+    </svg>
+    <span class="label">Footlore &middot; phase 04 &middot; deep dive</span>
+  </div>
+  <h1>The Walk Builder</h1>
+  <p class="standfirst">Everything else in Footlore answers "what's near me". This is the part that answers <em>"I've got two hours — show me a good afternoon."</em> It's the hardest screen in the app and the only one a competitor can't copy in a weekend.</p>
+</header>
+
+<section>
+  <span class="label">Interaction model</span>
+  <h2>Time is the currency, and every edit is priced in it</h2>
+  <p class="lede">The temptation is to build a playlist editor — a list you add places to. That fails the moment the walk doesn't fit the afternoon, which is always. The builder is a budget, not a basket.</p>
+  <div class="rules">
+    <div class="rule">
+      <h3>You set the shape, not the stops</h3>
+      <p>Input is a time budget, a start point, whether you want to eat, and a mood. The app proposes a whole walk. Picking individual places from a list is the fallback for people who want it, never the first ask.</p>
+    </div>
+    <div class="rule">
+      <h3>Every change quotes its price</h3>
+      <p>Swap, add, drop, reorder — each option shows what it costs in minutes before you commit. <code>+7 min</code> on a button is more useful than any amount of explanation afterwards.</p>
+    </div>
+    <div class="rule">
+      <h3>Lock what you care about, let the rest re-solve</h3>
+      <p>Pinning a stop makes it a constraint; everything unpinned rearranges around it. This is how you get a walk that's genuinely yours in three taps instead of thirty.</p>
+    </div>
+    <div class="rule">
+      <h3>The meal is an anchor, not an item</h3>
+      <p>A kitchen has opening hours, so lunch is a stop with a hard time window. The route is solved <em>around</em> it — that constraint is what makes the walk feel planned by someone rather than generated.</p>
+    </div>
+    <div class="rule">
+      <h3>Re-solving must be legible</h3>
+      <p>When one change reshuffles the walk, say what moved. A silent reshuffle destroys the sense that you're in control, which is the whole reason people trust the plan enough to follow it.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="label">Draft interfaces</span>
+  <h2>Four states of the builder</h2>
+  <p class="lede">Setup, the proposal, editing a stop, and the walk going wrong. Scroll sideways.</p>
+
+  <div class="screens">
+
+    <!-- ========== 1. SETUP ========== -->
+    <div class="screenbox">
+      <div class="phone">
+        <div class="status"><span>12:38</span><span>&#9679;&#9679;&#9679; &#9646;</span></div>
+        <div class="pheader">
+          <span class="now">New walk</span>
+          <h4>What's the afternoon look like?</h4>
+        </div>
+        <div class="pbody">
+          <div class="field">
+            <span class="q">How long have you got?</span>
+            <div class="scrub">
+              <span>30m</span><span>1h</span><span class="on">2h</span><span>3h</span><span>Day</span>
+            </div>
+            <span class="subline">Back by 14:40</span>
+          </div>
+
+          <div class="field">
+            <span class="q">Where does it end?</span>
+            <div class="endpick">
+              <div class="on"><strong>Back here</strong><span>loop</span></div>
+              <div><strong>Anywhere</strong><span>one way</span></div>
+              <div><strong>Pick a spot</strong><span>&mdash;</span></div>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="q">Eat along the way?</span>
+            <div class="toggleline">
+              <div>
+                <div style="font-size:13.5px;font-weight:600">Lunch, sit down</div>
+                <div class="subline">Around 13:15 &middot; ££ &middot; 45 min</div>
+              </div>
+              <div class="tog"><i></i></div>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="q">In the mood for</span>
+            <div class="pillrow">
+              <span class="pill on">Old &amp; historic</span>
+              <span class="pill">Waterside</span>
+              <span class="pill on">Street level</span>
+              <span class="pill">Green &amp; quiet</span>
+              <span class="pill">Views</span>
+              <span class="pill">Surprise me</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <span class="q">Pace</span>
+            <div class="scrub">
+              <span>Dawdle</span><span class="on">Stroll</span><span>Brisk</span>
+            </div>
+            <span class="subline">Stroll &asymp; 4 km/h, longer at each stop</span>
+          </div>
+        </div>
+        <div class="actionbar">
+          <div class="btn">Build the walk</div>
+        </div>
+      </div>
+      <p class="caption"><b>Setup.</b> Five questions, all answerable without thinking, all with a sensible default already selected — the screen is skippable in one tap. Time comes first because it constrains everything else, and the header restates it as a clock time, which is how people actually hold it in their head.</p>
+    </div>
+
+    <!-- ========== 2. PROPOSAL ========== -->
+    <div class="screenbox">
+      <div class="phone">
+        <div class="status"><span>12:39</span><span>&#9679;&#9679;&#9679; &#9646;</span></div>
+        <div class="pheader">
+          <span class="now">Proposed &middot; 5 stops &middot; 1.9 km</span>
+          <h4>Merchants, ships &amp; lunch</h4>
+        </div>
+        <div class="pbody" style="gap:11px">
+          <div class="ribbonbox">
+            <div class="ribbon">
+              <i class="walk" style="flex:6"></i>
+              <i class="stop" style="flex:12"></i>
+              <i class="walk" style="flex:9"></i>
+              <i class="stop" style="flex:14"></i>
+              <i class="walk" style="flex:5"></i>
+              <i class="stop" style="flex:8"></i>
+              <i class="walk" style="flex:4"></i>
+              <i class="meal" style="flex:45"></i>
+              <i class="walk" style="flex:10"></i>
+              <i class="stop" style="flex:7"></i>
+            </div>
+            <div class="ribbonkey">
+              <span><i class="sw walk"></i>Walking 34</span>
+              <span><i class="sw stop"></i>Stops 41</span>
+              <span><i class="sw meal"></i>Lunch 45</span>
+              <span style="margin-left:auto;color:var(--accent)">120 / 120 min</span>
+            </div>
+          </div>
+
+          <div class="stoplist">
+            <div class="srow locked">
+              <span class="snum">1</span>
+              <div class="sbody">
+                <strong>St John on the Wall</strong>
+                <span class="why">Last medieval gate in the city wall — and you're stood next to it.</span>
+              </div>
+              <div class="sright">
+                <span class="mins">12m</span>
+                <span class="icobtn lockon" title="Pinned">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                </span>
+              </div>
+            </div>
+            <div class="walkgap"><span>5 min walk</span><span class="dash"></span><span>350 m</span></div>
+
+            <div class="srow">
+              <span class="snum">2</span>
+              <div class="sbody">
+                <strong>The Exchange &amp; the Nails</strong>
+                <span class="why">"Pay on the nail" was coined on these four brass pillars.</span>
+              </div>
+              <div class="sright">
+                <span class="mins">14m</span>
+                <span class="icobtn" title="Swap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h13l-3-3M20 16H7l3 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </div>
+            </div>
+            <div class="walkgap"><span>3 min walk</span><span class="dash"></span><span>190 m</span></div>
+
+            <div class="srow">
+              <span class="snum">3</span>
+              <div class="sbody">
+                <strong>St Nicholas Market</strong>
+                <span class="why">Georgian glass arcade — a browse, not a meal.</span>
+              </div>
+              <div class="sright">
+                <span class="mins">8m</span>
+                <span class="icobtn" title="Swap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h13l-3-3M20 16H7l3 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </div>
+            </div>
+            <div class="walkgap"><span>4 min walk</span><span class="dash"></span><span>310 m</span></div>
+
+            <div class="srow meal">
+              <span class="snum" style="color:var(--amber)">4</span>
+              <div class="sbody">
+                <strong>Bianchis</strong>
+                <span class="why" style="color:var(--amber)">Table at 13:15 &middot; 4.8 &middot; the anchor everything else is timed around.</span>
+              </div>
+              <div class="sright">
+                <span class="mins" style="color:var(--amber)">45m</span>
+                <span class="icobtn" style="color:var(--amber);border-color:var(--amber)" title="Swap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h13l-3-3M20 16H7l3 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </div>
+            </div>
+            <div class="walkgap"><span>10 min walk</span><span class="dash"></span><span>800 m</span></div>
+
+            <div class="srow">
+              <span class="snum">5</span>
+              <div class="sbody">
+                <strong>Queen Square</strong>
+                <span class="why">Ends where you started, via the 1831 riot ground.</span>
+              </div>
+              <div class="sright">
+                <span class="mins">7m</span>
+                <span class="icobtn" title="Swap">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8h13l-3-3M20 16H7l3 3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="actionbar">
+          <div class="btn ghost">Rebuild</div>
+          <div class="btn">Start walking</div>
+        </div>
+      </div>
+      <p class="caption"><b>The proposal.</b> The ribbon at the top is the walk's shape as a single glance — hatched is walking, solid is a stop, amber is the meal — and it's the only place the budget is ever shown as arithmetic. Below it, walking legs are first-class rows, because "how far to the next one" is the question people ask constantly.</p>
+    </div>
+
+    <!-- ========== 3. SWAP ========== -->
+    <div class="screenbox">
+      <div class="phone">
+        <div class="status"><span>12:40</span><span>&#9679;&#9679;&#9679; &#9646;</span></div>
+        <div class="pheader">
+          <span class="now">Proposed &middot; 5 stops &middot; 1.9 km</span>
+          <h4>Merchants, ships &amp; lunch</h4>
+        </div>
+        <div class="pbody" style="gap:11px">
+          <div class="ribbonbox">
+            <div class="ribbon">
+              <i class="walk" style="flex:6"></i><i class="stop" style="flex:12"></i>
+              <i class="walk" style="flex:9"></i><i class="stop" style="flex:14;opacity:.3"></i>
+              <i class="walk" style="flex:5"></i><i class="stop" style="flex:8"></i>
+              <i class="walk" style="flex:4"></i><i class="meal" style="flex:45"></i>
+              <i class="walk" style="flex:10"></i><i class="stop" style="flex:7"></i>
+            </div>
+            <div class="ribbonkey"><span>Replacing stop 2</span><span style="margin-left:auto">120 / 120 min</span></div>
+          </div>
+          <div class="stoplist" style="opacity:.35">
+            <div class="srow"><span class="snum">1</span><div class="sbody"><strong>St John on the Wall</strong></div><div class="sright"><span class="mins">12m</span></div></div>
+            <div class="srow"><span class="snum">2</span><div class="sbody"><strong>The Exchange &amp; the Nails</strong></div><div class="sright"><span class="mins">14m</span></div></div>
+          </div>
+        </div>
+        <div class="dim"></div>
+        <div class="sheet">
+          <div class="grabber"></div>
+          <div>
+            <div style="font-size:16px;font-weight:600;letter-spacing:-.015em">Instead of The Exchange</div>
+            <div class="subline">Same slot &middot; keeps lunch at 13:15</div>
+          </div>
+
+          <div class="alt pick">
+            <div class="altop">
+              <strong>Llandoger Trow</strong>
+              <span class="delta plus">+3 min</span>
+            </div>
+            <span class="blurb" style="color:var(--ink)">The pub where Defoe reportedly met Alexander Selkirk — the castaway who became Crusoe.</span>
+            <div class="row">
+              <span class="tag see">1664</span>
+              <span class="dots"><i class="f"></i><i class="f"></i><i class="f"></i><i class="f"></i><i></i></span>
+              <span class="meta">story strength</span>
+            </div>
+          </div>
+
+          <div class="alt">
+            <div class="altop">
+              <strong>King Street</strong>
+              <span class="delta plus">+7 min</span>
+            </div>
+            <span class="blurb">Cobbles, timber frames and the oldest working playhouse in the country.</span>
+            <div class="row">
+              <span class="tag see">GEORGIAN</span>
+              <span class="dots"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i></span>
+              <span class="meta">adds 400 m</span>
+            </div>
+          </div>
+
+          <div class="alt">
+            <div class="altop">
+              <strong>Nothing — skip it</strong>
+              <span class="delta minus">&minus;17 min</span>
+            </div>
+            <span class="blurb">Longer over lunch, home by 14:23.</span>
+          </div>
+
+          <div class="actionbar" style="padding:2px 0 0">
+            <div class="btn ghost">Cancel</div>
+            <div class="btn">Swap in Llandoger Trow</div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><b>Swapping a stop.</b> Three or four alternates, never a search results page. Each one is priced against the current plan, and "skip it" is offered as a peer option because dropping a stop is the most common edit. The ribbon behind dims the slot being changed so the edit stays anchored in the whole.</p>
+    </div>
+
+    <!-- ========== 4. RUNNING LATE ========== -->
+    <div class="screenbox">
+      <div class="phone">
+        <div class="status"><span>14:41</span><span>&#9679;&#9679;&#9679; &#9646;</span></div>
+        <div class="pheader">
+          <span class="now">Leaving stop 4 of 5</span>
+          <h4>Merchants, ships &amp; lunch</h4>
+        </div>
+        <div class="pbody" style="gap:12px">
+          <div class="ribbonbox">
+            <div class="overbar">
+              <i class="walk" style="flex:6"></i><i class="stop" style="flex:12"></i>
+              <i class="walk" style="flex:9"></i><i class="stop" style="flex:14"></i>
+              <i class="walk" style="flex:5"></i><i class="stop" style="flex:8"></i>
+              <i class="walk" style="flex:4"></i><i class="meal" style="flex:63"></i>
+              <i class="over" style="flex:10"></i><i class="over" style="flex:7;opacity:.6"></i>
+            </div>
+            <div class="ribbonkey">
+              <span>Lunch ran long</span>
+              <span style="margin-left:auto;color:var(--alert)">138 / 120 min</span>
+            </div>
+          </div>
+
+          <div class="banner">
+            <span class="label">18 minutes over</span>
+            <h5>Lunch took 63 minutes. Want the rest trimmed?</h5>
+            <div class="choice">
+              <div>
+                <strong>Skip Queen Square</strong>
+                <div class="subline" style="margin:0">Straight home &middot; back at 14:47</div>
+              </div>
+              <span>&minus;11m</span>
+            </div>
+            <div class="choice">
+              <div>
+                <strong>The short telling there</strong>
+                <div class="subline" style="margin:0">One minute instead of three &middot; 14:54</div>
+              </div>
+              <span>&minus;4m</span>
+            </div>
+            <div class="choice" style="border-color:var(--accent)">
+              <div>
+                <strong>Keep it all</strong>
+                <div class="subline" style="margin:0">Back at 14:58 instead of 14:40</div>
+              </div>
+              <span style="color:var(--accent)">+0m</span>
+            </div>
+          </div>
+
+          <div class="stoplist">
+            <div class="srow">
+              <span class="snum">5</span>
+              <div class="sbody">
+                <strong>Queen Square</strong>
+                <span class="why">10 min walk &middot; 800 m &middot; last stop</span>
+              </div>
+              <div class="sright"><span class="mins">7m</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="actionbar">
+          <div class="btn ghost">End walk</div>
+          <div class="btn">Directions</div>
+        </div>
+      </div>
+      <p class="caption"><b>Going over.</b> Every walk overruns, so the plan has to bend without nagging. The app never silently reroutes and never scolds — it states the overrun once, offers three concrete trims with their consequences in clock time, and treats "keep it all" as a legitimate answer.</p>
+    </div>
+
+  </div>
+</section>
+
+<section>
+  <span class="label">Under the hood</span>
+  <h2>How a walk gets solved</h2>
+  <p class="lede">This is an orienteering problem — pick a subset of scored places and a route through them that fits a time budget — with one time window on the meal. It's NP-hard in general and completely tractable at the size we need, which is under thirty candidates and under seven stops.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="n">CANDIDATES</div>
+      <div>
+        <h3>Take the top ~30 within reach</h3>
+        <p>Pull ranked places from the existing nearby query, capped by a radius derived from the budget and pace: a two-hour stroll with 45 minutes of lunch leaves roughly 34 minutes of walking, so nothing beyond about 1.2 km of route length can be reached at all. Mood filters weight the scores rather than hard-filtering, so a thin category never empties the walk.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="n">ANCHOR</div>
+      <div>
+        <h3>Place the meal first</h3>
+        <p>Choose the restaurant on rating, price band, and whether its kitchen is open in the target window, then fix it as a stop with a hard arrival window. Everything else is solved around a route that must pass through it at roughly the right time.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="n">INSERT</div>
+      <div>
+        <h3>Greedily add the best value per minute</h3>
+        <p>Repeatedly insert the candidate with the highest score-per-added-minute at its cheapest position in the route, until the budget is spent. Cheap, fast, and produces sensible walks — the classic greedy-insertion heuristic for this problem.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="n">IMPROVE</div>
+      <div>
+        <h3>Untangle with 2-opt</h3>
+        <p>Run a few passes of 2-opt over the ordering to remove crossings, respecting the pinned stops and the meal window. This is the difference between a route that looks planned and one that visibly doubles back — people notice crossings even when the total time is identical.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="n">NARRATE</div>
+      <div>
+        <h3>Give it a title and a thread</h3>
+        <p>Once the stops are fixed, Claude writes the walk's name and the one-line reason on each row, with the other stops in context so the walk reads as a theme rather than five unrelated facts. Cached against the stop set, so a re-solve that changes one stop only rewrites what moved.</p>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:26px"><b>Routing distances:</b> real walking times need a routing engine — OSRM's public demo server or a self-hosted instance on the OSM extract, with straight-line distance times 1.35 as the fallback when it's unavailable. Distances get cached per pair, and a walk only needs about 400 pairs at most, so the whole solve is one round trip.</p>
+</section>
+
+<section>
+  <span class="label">Edit semantics</span>
+  <h2>What each gesture does to the plan</h2>
+  <p class="lede">The re-solve rules matter more than the visuals here. Get them wrong and the app feels like it's fighting you.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Gesture</th><th>Effect on the walk</th><th>What the user sees</th></tr></thead>
+      <tbody>
+        <tr>
+          <td class="k">Pin a stop</td>
+          <td>Becomes a hard constraint; position in the order is kept</td>
+          <td>Row turns green, stays put through every later re-solve</td>
+        </tr>
+        <tr>
+          <td class="k">Swap</td>
+          <td>Only that slot re-solves. Order and all other stops are held</td>
+          <td>Three alternates with a minute delta each, plus "skip it"</td>
+        </tr>
+        <tr>
+          <td class="k">Drop</td>
+          <td>Freed minutes are offered, not auto-spent</td>
+          <td>"14 minutes free — add a stop, or finish 14 min earlier?"</td>
+        </tr>
+        <tr>
+          <td class="k">Reorder by drag</td>
+          <td>Order is honoured exactly, even if it's worse. Walking time recomputes</td>
+          <td>Ribbon stretches; if it now overruns, an inline note offers the fix</td>
+        </tr>
+        <tr>
+          <td class="k">Change the budget</td>
+          <td>Full re-solve, pinned stops preserved</td>
+          <td>A diff, not a fresh list: "Added King Street, dropped nothing"</td>
+        </tr>
+        <tr>
+          <td class="k">Rebuild</td>
+          <td>New candidate sample, same inputs; recently shown stops are penalised</td>
+          <td>A visibly different walk, not the same one shuffled</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section>
+  <span class="label">Settled</span>
+  <h2>Both of these are now code, not intentions</h2>
+  <p class="lede">The edit rules and the constrained 2-opt were the two pieces most likely to be quietly got wrong during the build, and neither needs an API key to write. So they exist, with a behavioural test for every rule in the table above.</p>
+
+  <div class="term">
+    <div class="termbar"><b>node solver/test.mjs</b><span>&middot;</span><span>no dependencies</span></div>
+    <pre><span class="hd">WALK BUILDER — 2-opt</span>
+
+
+<span class="hd">WALK BUILDER — edit semantics</span>
+
+  <span class="ok">ok</span>    untangles a deliberately crossed route
+         2 crossing -&gt; 0; cost 32.2m -&gt; 21.2m on foot in 2 passes
+         stjohn &gt; queensq &gt; stnicks &gt; llandoger
+         stjohn &gt; stnicks &gt; llandoger &gt; queensq
+  <span class="ok">ok</span>    never moves a pinned stop, even when moving it would be cheaper
+         free: stjohn &gt; stnicks &gt; llandoger &gt; queensq (21.2m)
+         pinned: stjohn &gt; queensq &gt; llandoger &gt; stnicks (21.3m) — held index 1
+  <span class="ok">ok</span>    prefers a longer walk over waiting outside a shut kitchen
+         wait 58 -&gt; 17 min, total 141 -&gt; 102 min
+         walking-only cost would have preferred the shorter walk: 23 -&gt; 25 min on foot
+  <span class="ok">ok</span>    refuses to reorder a plan the user hand-ordered
+         order preserved; solver stood down
+  <span class="ok">ok</span>    baseline walk fits its budget and makes the lunch window
+         stjohn &gt; exchange &gt; stnicks &gt; bianchis &gt; queensq | walk 25 + stops 41 + meal 45 + wait 0 = 111/120m, back 14:31
+  <span class="ok">ok</span>    swap changes only that slot, and prices itself honestly
+         added Llandoger Trow, dropped The Exchange &amp; the Nails · back at 14:39 (+8 min)
+  <span class="ok">ok</span>    drop offers the freed minutes instead of spending them
+         freed 14 min → "Finish 14 min earlier" / "Add Llandoger Trow instead"
+  <span class="ok">ok</span>    reorder is obeyed exactly, even when it is worse
+         still within budget
+  <span class="ok">ok</span>    a hand-ordered plan that overruns says so instead of fixing itself
+         That order runs 12 min over — drop a stop, or finish at 14:32?
+  <span class="ok">ok</span>    pinning is a constraint, not a re-solve
+         St Nicholas Market will stay put
+  <span class="ok">ok</span>    budget change re-solves, keeps pins, and reports a diff
+         added Castle Park ruins, Llandoger Trow, King Street, Christmas Steps · back at 15:23
+         stjohn &gt; castlepark &gt; llandoger &gt; queensq &gt; kingst &gt; stnicks &gt; exchange &gt; bianchis &gt; xmassteps | walk 38 + stops 80 + meal 45 + wait 0 = 163/165m, back 15:23
+  <span class="ok">ok</span>    rebuild returns a visibly different walk, not a shuffle
+         stjohn &gt; exchange &gt; stnicks &gt; bianchis &gt; queensq
+         stjohn &gt; llandoger &gt; kingst &gt; bianchis &gt; xmassteps
+  <span class="ok">ok</span>    an unreachable kitchen is caught before the walk is proposed
+         refused with meal-window-infeasible → UI offers an earlier meal, a cut stop, or a takeaway
+
+<span class="tot">13 passed, 0 failed</span></pre>
+  </div>
+
+  <div class="finding">
+    <span class="label">What the tests caught</span>
+    <h3>The solver was rounding to the minute, and it made tangled routes look optimal</h3>
+    <p>Walking times are rounded for display &mdash; nobody wants <code>21.2 min</code> on a button. The first version fed those same rounded minutes to the routing cost, which made genuinely different orderings tie at 22 minutes each. A tie means 2-opt stops at whichever ordering it reached first, so the untangling test failed with a visibly crossed route whose arithmetic was perfectly correct.</p>
+    <p>Fix: the cost function measures unrounded metres, and only the display rounds. Crossings on the fixture went from two to zero. This is exactly the class of bug that ships unnoticed &mdash; the numbers are right, the map just looks stupid.</p>
+  </div>
+
+  <h3 style="margin-top:34px">What's in the module</h3>
+  <div class="filelist">
+    <div class="filerow"><code>plan.mjs</code><span>The single place time arithmetic happens. Everything on screen &mdash; the ribbon, the minute deltas, "back at 14:47" &mdash; is read off <code>schedule()</code>. It is also the only thing that knows waiting is elapsed time.</span></div>
+    <div class="filerow"><code>twoopt.mjs</code><span>Constrained 2-opt. Pinned stops keep their index; cost is walking plus waiting; refuses outright to touch a plan the user hand-ordered.</span></div>
+    <div class="filerow"><code>edits.mjs</code><span>The reducer the UI is written against: <code>applyEdit(plan, edit)</code> returns the new plan plus a diff, an offer, or a warning. One place to change if a rule turns out wrong.</span></div>
+    <div class="filerow"><code>solve.mjs</code><span>Greedy insertion. Pins, then the meal anchor, then value-per-minute insertion, then 2-opt &mdash; in that order, every time.</span></div>
+    <div class="filerow"><code>fixtures.mjs</code><span>Real Bristol coordinates, so the numbers in the tests are real distances rather than invented ones.</span></div>
+  </div>
+
+  <p style="margin-top:28px"><b>Two rules earned their place by being tested, not argued.</b> "Drop offers the freed minutes instead of spending them" and "a hand-ordered plan is honoured even when it is worse" both sound like fussy details in a document. As assertions that fail loudly the moment someone adds a convenience auto-fill, they're the difference between a planner that feels collaborative and one that feels like it's correcting you.</p>
+</section>
+
+<section>
+  <span class="label">Failure modes</span>
+  <h2>Where this gets embarrassing</h2>
+  <p class="lede">The builder makes promises about the next two hours of someone's life. These are the four ways it breaks that promise.</p>
+  <div class="cols">
+    <div class="card2">
+      <span class="label">Thin ground</span>
+      <h3>Not enough worth stopping at</h3>
+      <p>Fewer than three candidates above the story floor. Say so and offer a shorter walk or a wider radius — never pad with a postbox. "There's about 40 minutes of good here, not two hours" is a genuinely useful answer.</p>
+    </div>
+    <div class="card2">
+      <span class="label">Infeasible</span>
+      <h3>The meal window doesn't fit</h3>
+      <p>Kitchens shut at 14:30 and the walk can't reach one in time. Resolve before proposing: shift the meal earlier, cut a stop, or drop to a takeaway stop — and name which of the three was done.</p>
+    </div>
+    <div class="card2">
+      <span class="label">Drift</span>
+      <h3>They wander off the route</h3>
+      <p>People stop for coffee, take the other street. Detect distance from the planned leg, and after a threshold offer to re-solve from where they actually are rather than steering them back.</p>
+    </div>
+    <div class="card2">
+      <span class="label">Conditions</span>
+      <h3>Weather and closing time</h3>
+      <p>A two-hour outdoor loop in the rain, or a walk built at 16:20 when everything shuts at 17:00. Both are known before the solve — bias toward covered, short, and open-late instead of proposing something doomed.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <span class="label">Scope</span>
+  <h2>What ships in phase 04, and what waits</h2>
+  <div class="cols">
+    <div class="card2" style="border-color:var(--accent)">
+      <span class="label" style="color:var(--accent)">Ships</span>
+      <h3>The whole loop, foreground only</h3>
+      <p>Setup, solve, proposal with the ribbon, swap and drop, pinning, the running timeline, and foreground arrival detection. Walk state persists locally so closing the tab doesn't lose the afternoon.</p>
+    </div>
+    <div class="card2">
+      <span class="label">Waits for iOS</span>
+      <h3>Background arrival and offline</h3>
+      <p>Region monitoring with the screen off, audio that continues in the background, and a walk cached for the tube. These are the reasons phase 05 exists — the web build should not fake them.</p>
+    </div>
+    <div class="card2">
+      <span class="label">Later</span>
+      <h3>Shared and saved walks</h3>
+      <p>Sending someone a walk you liked, or replaying one in a new city. Attractive, but it needs an account system and a permanence guarantee that phase 04 shouldn't be carrying.</p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>Draft three. The solver and the edit rules run: <code>node solver/test.mjs</code>. The open question I'd argue about first: whether the meal should be an anchor by default or an optional add — anchoring makes better afternoons, but it also makes every walk revolve around a restaurant the person didn't choose.</p>
+</footer>
+
+</div>

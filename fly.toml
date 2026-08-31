@@ -1,0 +1,41 @@
+# Footlore wants one long-lived process with one writable disk — not a serverless
+# function. The in-memory recent-places map and the on-disk provider cache are
+# both per-machine state, so this is deliberately a single machine that is never
+# auto-stopped.
+
+# Fly app names are global and can't be checked without an authenticated
+# flyctl; `fly apps create footlore` either takes it or tells you it's gone.
+app = "footlore"
+primary_region = "lhr"
+
+[build]
+
+[env]
+  PORT = "8080"
+  FOOTLORE_CACHE = "/data/cache"
+
+[[mounts]]
+  source = "footlore_cache"
+  destination = "/data"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false   # a cold start would re-fetch Overpass from scratch
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [http_service.http_options.response.headers]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "no-referrer"
+
+[[http_service.checks]]
+  grace_period = "5s"
+  interval = "30s"
+  method = "GET"
+  timeout = "5s"
+  path = "/healthz"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"

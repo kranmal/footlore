@@ -1,0 +1,7 @@
+.cache
+.claude
+.git
+node_modules
+*.html
+!web/*.html
+README.md

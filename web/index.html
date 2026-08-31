@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Footlore</title>
+<meta name="description" content="What's worth looking at, right where you're standing.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div>
+      <div class="wordmark">
+        <svg class="pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M12 21s7-6.3 7-11a7 7 0 1 0-14 0c0 4.7 7 11 7 11Z"/><circle cx="12" cy="10" r="2.4"/>
+        </svg>
+        <h1>Footlore</h1>
+      </div>
+      <div class="label where" id="where">finding you…</div>
+    </div>
+    <div class="tools">
+      <button id="radius" title="How far to look">900 m</button>
+      <button id="refresh" title="Look again">↻</button>
+    </div>
+  </header>
+
+  <div class="status label" id="status"><span class="dot"></span>loading</div>
+  <div class="feed" id="feed"></div>
+  <footer class="attrib" id="attrib"></footer>
+</div>
+
+<dialog id="sheet"><div class="sheet" id="sheetBody"></div></dialog>
+<script type="module" src="app.js"></script>
+</body>
+</html>
