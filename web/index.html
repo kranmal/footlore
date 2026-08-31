@@ -9,6 +9,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Newsreader:opsz,wght@6..72,300;6..72,400;6..72,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 <link rel="stylesheet" href="styles.css">
+<script>
+  // Before first paint: an explicit choice, if there is one. Without this the
+  // page renders in the OS theme and then jumps, which is worse than no toggle.
+  try {
+    var t = localStorage.getItem('fl.theme');
+    if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
+  } catch (e) { /* storage blocked: fall through to the OS theme */ }
+</script>
 </head>
 <body>
 <div class="app">
@@ -24,6 +32,7 @@
     </div>
     <div class="tools">
       <button id="radius" title="How far to look">900 m</button>
+      <button id="theme" title="Light or dark" aria-label="Switch between light and dark">◐</button>
       <button id="refresh" title="Look again">↻</button>
     </div>
   </header>

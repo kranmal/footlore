@@ -192,6 +192,17 @@ el('radius').addEventListener('click', () => {
   el('radius').textContent = `${radius} m`;
   load();
 });
+// Theme. No stored value means "follow the OS", so the first click has to flip
+// away from what is *currently* on screen rather than from a remembered choice.
+el('theme').addEventListener('click', () => {
+  const root = document.documentElement;
+  const dark = root.dataset.theme
+    ? root.dataset.theme === 'dark'
+    : matchMedia('(prefers-color-scheme: dark)').matches;
+  root.dataset.theme = dark ? 'light' : 'dark';
+  try { localStorage.setItem('fl.theme', root.dataset.theme); } catch { /* not fatal */ }
+});
+
 el('refresh').addEventListener('click', load);
 sheet.addEventListener('click', (e) => { if (e.target === sheet) sheet.close(); });
 

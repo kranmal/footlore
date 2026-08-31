@@ -20,6 +20,7 @@
   }
 }
 :root[data-theme="dark"]{
+  color-scheme:dark;
   --bg:#0E1412; --surface:#161E1A; --surface-2:#1D2622;
   --ink:#E6EDE8; --muted:#93A29A; --line:#28332E;
   --accent:#56C39A; --accent-soft:#1B3A30;
@@ -27,6 +28,8 @@
   --shadow:0 1px 2px rgba(0,0,0,.4), 0 14px 30px rgba(0,0,0,.42);
   --shadow-sm:0 1px 2px rgba(0,0,0,.35), 0 4px 10px rgba(0,0,0,.3);
 }
+
+:root[data-theme="light"]{color-scheme:light}
 
 *{box-sizing:border-box}
 html,body{height:100%}
@@ -63,6 +66,7 @@ header.top{
   padding:6px 10px;border-radius:999px;color:var(--muted);white-space:nowrap;
 }
 .tools button:hover{color:var(--ink);border-color:var(--muted)}
+#theme{padding:6px 9px;font-size:13px;line-height:1}
 
 /* ---------- status line ---------- */
 .status{
