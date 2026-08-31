@@ -1,0 +1,35 @@
+# Runs the test suite on every pull request, so "merge when green" means
+# something. Until this existed the only workflow in the repo was the Pages
+# build, which runs on main *after* a merge and never on a PR.
+name: test
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'      # the minimum the package declares
+
+      # No dependencies to install: the app is zero-dependency by design, and
+      # `npm ci` would fail on the missing lockfile rather than pass trivially.
+      - name: Test
+        run: npm test
+
+      # docs/ is a build artefact that is committed, so it can drift from the
+      # source it is built from and nothing would notice until the live site
+      # was wrong. Rebuild it and fail if the result differs from the tree.
+      - name: docs/ is in sync with its source
+        run: |
+          node tools/build-static.mjs
+          if ! git diff --quiet -- docs; then
+            echo "::error::docs/ is stale — run 'node tools/build-static.mjs' and commit the result"
+            git diff --stat -- docs
+            exit 1
+          fi
