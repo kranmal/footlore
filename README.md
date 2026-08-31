@@ -3,13 +3,13 @@
 A pocket tour guide. It reads the ground you're standing on: what's nearby, and
 one sentence on why it's worth crossing the road for.
 
-Three tabs — **Sights**, **Food**, **Shops** — and a directions button on every
-card that hands the walk to the phone's own map app. No map of its own, no
-accounts.
+Four tabs — **Sights**, **Food**, **Shops**, **Walk** — and a directions button
+on every card that hands the walk to the phone's own map app. No map of its own,
+no accounts.
 
 ```bash
 npm start          # http://localhost:4173
-npm test           # 27 tests: route solver + narration accuracy
+npm test           # 66 tests: route solver, narration accuracy, tags and hours
 npm run probe      # the same pipeline, printed to a terminal
 ```
 
@@ -24,6 +24,13 @@ Overpass (OSM)  ->  Wikidata/Wikipedia  ->  story floor  ->  rank  ->  narrate
 The client never talks to a provider and never holds a key. Everything is
 cached server-side at three different lifetimes, because Overpass is slow and
 rate-limited, Wikipedia is polite-use, and narration costs money.
+
+Two Overpass failures answer HTTP 200 with an empty result and are therefore
+indistinguishable from "nothing is mapped here" — a timed-out query, which
+carries a `remark`, and a mirror whose database has not finished loading, which
+reports a `timestamp_osm_base` that is not a date. Both are caught and failed
+over rather than cached, because the alternative is telling somebody standing in
+central Bristol that there is nothing around them.
 
 **The story floor** is the part that matters. A typical city-centre query
 returns ~470 mapped objects and roughly 380 of them are dropped before ranking,
@@ -47,6 +54,26 @@ to ask of a sandwich shop. What replaces it is deliberately modest:
   about the building it stands in — quoting "part rebuilt as a facsimile in
   1993" under a travel agent's name would be true of the wall and false of the
   business. The article is shown in the detail sheet, labelled as what it is.
+
+## The Walk tab
+
+Greedy insertion, then a constrained 2-opt, over the sights the feed already
+loaded — no second round of queries. A meal is optional and, when asked for, is
+placed first, because a kitchen's closing time is the only hard constraint in
+the problem and choosing the restaurant last means routinely discovering at the
+end that it shut twenty minutes ago.
+
+Almost every number on that screen is an estimate, and the panel says which:
+
+- Walking times are straight-line distance × 1.35. No routing engine, so a river
+  or a railway between two stops is not accounted for.
+- Time at each stop is a flat guess — 45 minutes for a museum, 10 where there is
+  an article to read, 5 otherwise. Nothing in the map records how long a place
+  takes, so nothing here pretends to have derived it.
+- Opening hours are checked only for the meal, only where they are mapped, and
+  only in the plain `Mo-Fr 09:00-17:00` forms `hoursToday()` actually reads.
+  Anything else comes back as *unknown*, never as *closed* — and when the chosen
+  place has no hours at all, the panel says so by name.
 
 ## Accuracy
 
@@ -137,8 +164,10 @@ solver/   walk routing — greedy insertion, constrained 2-opt, edit semantics
 web/      the feed and detail sheet
 ```
 
-`solver/` is Phase 04 work, built early and tested against fixtures; nothing in
-the web app calls it yet.
+`solver/` is served to the page as-is by both builds — it is plain browser-safe
+ESM — and `web/walkview.js` is the only thing that adapts between the feed and
+it. Its tests still run against `solver/fixtures.mjs`; the live catalogue is
+injected as `plan.catalog`.
 
 ## Attribution
 

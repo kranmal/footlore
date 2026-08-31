@@ -1,6 +1,7 @@
 // The nearby feed. Three tabs, one fetch each, one list, one detail sheet.
 
 import { loadNearby, QUOTING_NOTE } from './api.js';
+import { buildWalk, renderWalk, BUDGETS } from './walkview.js';
 // Everything interesting happens behind api.js; this file just shows it.
 
 const BRISTOL = { lat: 51.4546, lng: -2.5945, label: 'Corn Street, Bristol' };
@@ -13,6 +14,10 @@ const TABS = [
   { kind: 'see', title: 'Sights', empty: 'Nothing worth stopping for' },
   { kind: 'food', title: 'Food', empty: 'Nowhere to eat is mapped' },
   { kind: 'shop', title: 'Shops', empty: 'No shops are mapped' },
+  // Walk is the odd one out: it fetches nothing of its own, it orders what the
+  // other tabs already loaded. Kept in the same list so the tab wiring below
+  // stays one loop rather than a special case.
+  { kind: 'walk', title: 'Walk', empty: 'No walk to build' },
 ];
 
 const el = (id) => document.getElementById(id);
@@ -25,6 +30,8 @@ const seen = new Set(JSON.parse(localStorage.getItem('footlore.seen') ?? '[]'));
 // Per-tab results, so switching back doesn't re-run the whole pipeline.
 const results = new Map();
 let places = [];
+let budget = 90;
+let wantMeal = false;
 
 /** Ask the browser, fall back to Bristol — the app should never show nothing. */
 function locate() {
@@ -200,6 +207,9 @@ function open(p) {
 }
 
 async function load({ force = false } = {}) {
+  el('walkbar').hidden = kind !== 'walk';
+  if (kind === 'walk') return loadWalk({ force });
+
   const want = kind;
   const key = `${want}:${radius}`;
   if (!force && results.has(key)) {
@@ -219,6 +229,44 @@ async function load({ force = false } = {}) {
   } catch (e) {
     if (want !== kind) return;
     feed.replaceChildren(html(`<div class="note"><b>Couldn't load the feed.</b><br>${e.message}</div>`));
+    status.replaceChildren(html('<span class="dot" style="background:var(--amber)"></span>offline'));
+  }
+}
+
+/** One tab's feed, from the cache if it is already there. */
+async function feedFor(want, force) {
+  const key = `${want}:${radius}`;
+  if (!force && results.has(key)) return results.get(key);
+  const data = await loadNearby({ lat: here.lat, lng: here.lng, radius, seen: [...seen], kind: want });
+  results.set(key, data);
+  return data;
+}
+
+async function loadWalk({ force = false } = {}) {
+  skeletons(3);
+  status.replaceChildren(html('<span class="dot"></span>working out a route…'));
+  try {
+    // The sights feed is the walk. Food is only fetched when a meal is asked
+    // for — otherwise it is a second Overpass call for a list nothing reads.
+    const [see, food] = await Promise.all([
+      feedFor('see', force),
+      wantMeal ? feedFor('food', force) : Promise.resolve({ places: [] }),
+    ]);
+    if (kind !== 'walk') return;
+
+    const result = buildWalk({
+      here, sights: see.places, foods: food.places, budget, wantMeal,
+    });
+    renderWalk(feed, result, { budget, wantMeal, onDirections: (p) => directionsLink(p, 'Go') });
+
+    status.replaceChildren(html(result.ok
+      ? `<span class="dot"></span>${result.sched.stops.length} stops · ${result.sched.total} of ${budget} min · ` +
+        `<span class="warn">times are estimates</span>`
+      : `<span class="dot" style="background:var(--amber)"></span>no walk fits`));
+    el('attrib').textContent = (see.meta?.attribution ?? []).join('  ·  ');
+  } catch (e) {
+    if (kind !== 'walk') return;
+    feed.replaceChildren(html(`<div class="note"><b>Couldn't build a walk.</b><br>${e.message}</div>`));
     status.replaceChildren(html('<span class="dot" style="background:var(--amber)"></span>offline'));
   }
 }
@@ -293,6 +341,25 @@ function html(s) {
   return t.content.childNodes.length > 1 ? t.content : t.content.firstChild;
 }
 function chip(label, cls = 'chip') { return label ? node('span', cls, [text(label)]) : null; }
+
+for (const mins of BUDGETS) {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = `${mins} min`;
+  b.setAttribute('aria-pressed', String(mins === budget));
+  b.addEventListener('click', () => {
+    budget = mins;
+    for (const other of el('budgets').children) {
+      other.setAttribute('aria-pressed', String(other === b));
+    }
+    loadWalk();
+  });
+  el('budgets').append(b);
+}
+el('wantMeal').addEventListener('change', (e) => {
+  wantMeal = e.target.checked;
+  loadWalk();
+});
 
 for (const b of document.querySelectorAll('#tabs button')) {
   b.addEventListener('click', () => {

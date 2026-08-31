@@ -65,7 +65,27 @@ async function post(url, body, signal) {
     signal,
   });
   if (!res.ok) throw new Error(`overpass ${res.status}`);
-  return res.json();
+  const json = await res.json();
+  // A timed-out or rate-limited Overpass query answers 200 with an empty
+  // element list and a `remark`. Taken at face value that is indistinguishable
+  // from "nothing is mapped here" — and it gets cached under that meaning, so
+  // the app then tells somebody standing in central Bristol that there is
+  // nothing around them. Treat it as the failure it is and try the next mirror.
+  if (json.remark && /error|timed? ?out|rate|memory/i.test(json.remark)) {
+    throw new Error(`overpass remark: ${String(json.remark).slice(0, 120)}`);
+  }
+  // A mirror whose database hasn't finished loading answers 200, with no
+  // remark, and with an empty element list for every query on earth — the
+  // osm.ch mirror did exactly this while this was being written, reporting
+  // `timestamp_osm_base: "116796"` where a working instance reports an ISO
+  // date. Without this check the app cheerfully caches "nothing is mapped in
+  // central Bristol". An unreadable timestamp means the mirror cannot answer.
+  // (Shape, not Date.parse: `Date.parse("116796")` happily reads that as a year.)
+  const ts = json.osm3s?.timestamp_osm_base;
+  if (!/^\d{4}-\d{2}-\d{2}T/.test(String(ts ?? ''))) {
+    throw new Error(`overpass stale mirror: timestamp_osm_base=${ts ?? 'missing'}`);
+  }
+  return json;
 }
 
 /** Normalise a raw OSM element into something the rest of the app can hold. */

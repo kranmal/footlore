@@ -80,31 +80,59 @@ export function storyStrength(p) {
   return { score: Math.min(score, 1), signals, rejected: null };
 }
 
-/** Is it open, per OSM opening_hours? Deliberately conservative. */
-export function openNow(p, now = new Date()) {
-  const oh = p.openingHours;
-  if (!oh) return null;                       // unknown, not "closed"
-  if (/24\/7/.test(oh)) return true;
+/**
+ * Today's opening ranges, per OSM `opening_hours`.
+ *
+ * Deliberately partial: it reads the plain `Mo-Fr 09:00-17:00` form and 24/7,
+ * and gives up on everything else rather than guessing. Giving up returns null,
+ * which every caller treats as "unknown" — never as "closed". A guessed closing
+ * time is worse than an admitted gap, because the walk builder would route a
+ * meal against it.
+ *
+ * @returns {[number, number][] | null}  minutes since midnight, or null
+ */
+export function hoursToday(oh, now = new Date()) {
+  if (!oh) return null;
+  if (/24\/7/.test(oh)) return [[0, 24 * 60]];
+
   const days = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
   const today = days[now.getDay()];
-  const mins = now.getHours() * 60 + now.getMinutes();
-  const rules = oh.split(';').map((s) => s.trim());
-  for (const rule of rules) {
-    const m = rule.match(/^([A-Za-z,\-]+)?\s*(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/);
+  const ranges = [];
+  let understood = false;
+
+  for (const rule of oh.split(';').map((r) => r.trim())) {
+    // `Mo-Su 12:00-14:30,17:00-22:00` — a kitchen that shuts in the afternoon.
+    // Common enough among the places a walk is routed around that reading it as
+    // "unknown" would throw away the one constraint the solver actually has.
+    const m = rule.match(/^([A-Za-z,\-]+)?\s*((?:\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})(?:\s*,\s*\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})*)$/);
     if (!m) continue;
-    const [, dayPart, h1, m1, h2, m2] = m;
+    understood = true;
+    const [, dayPart, spans] = m;
     if (dayPart && !dayPart.includes(today)) {
       const range = dayPart.match(/^([A-Za-z]{2})-([A-Za-z]{2})$/);
       if (!range) continue;
       const from = days.indexOf(range[1]), to = days.indexOf(range[2]);
+      if (from < 0 || to < 0) continue;
       const d = now.getDay();
       const inRange = from <= to ? d >= from && d <= to : d >= from || d <= to;
       if (!inRange) continue;
     }
-    const open = +h1 * 60 + +m1, close = +h2 * 60 + +m2;
-    if (mins >= open && mins <= close) return true;
+    for (const span of spans.split(',')) {
+      const [, h1, m1, h2, m2] = span.trim().match(/^(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})$/);
+      ranges.push([+h1 * 60 + +m1, +h2 * 60 + +m2]);
+    }
   }
-  return false;
+
+  if (!understood) return null;      // a form this parser doesn't read
+  return ranges;                     // [] means "understood, and shut today"
+}
+
+/** Is it open, per OSM opening_hours? null where the hours aren't known. */
+export function openNow(p, now = new Date()) {
+  const ranges = hoursToday(p.openingHours, now);
+  if (ranges === null) return null;                 // unknown, not "closed"
+  const mins = now.getHours() * 60 + now.getMinutes();
+  return ranges.some(([open, close]) => mins >= open && mins <= close);
 }
 
 /**

@@ -8,7 +8,7 @@
 import { fetchNearby } from './overpass.mjs';
 import { enrich } from './wiki.mjs';
 import { narrate, cleanExtract } from './narrate.mjs';
-import { storyStrength, rank, STORY_FLOOR } from './score.mjs';
+import { storyStrength, rank, STORY_FLOOR, hoursToday } from './score.mjs';
 import { nearbyLocal } from './local.mjs';
 
 /**
@@ -122,6 +122,11 @@ function publicShape(p) {
     walkMinutes: p.walkMinutes,
     metres: p.metres,
     open: p.open,
+    hours: p.openingHours ?? null,
+    // Minutes since midnight, resolved here rather than in the page: the same
+    // code then answers "open now" and "can the walk reach it in time". The
+    // clock is the server's; on the static build that is the walker's own.
+    windowToday: hoursToday(p.openingHours) ?? null,
     fee: p.fee ?? null,
     story: +p.story.toFixed(3),
     rankScore: +p.rankScore.toFixed(3),
