@@ -42,7 +42,19 @@
     <button type="button" role="tab" data-kind="see" aria-selected="true">Sights</button>
     <button type="button" role="tab" data-kind="food" aria-selected="false">Food</button>
     <button type="button" role="tab" data-kind="shop" aria-selected="false">Shops</button>
+    <button type="button" role="tab" data-kind="walk" aria-selected="false">Walk</button>
   </nav>
+
+  <div class="walkbar" id="walkbar" hidden>
+    <div class="walkrow">
+      <span class="label">How long</span>
+      <div class="pills" id="budgets" role="group" aria-label="How long the walk should take"></div>
+    </div>
+    <label class="walkrow meal">
+      <input type="checkbox" id="wantMeal">
+      <span>Work a meal into it</span>
+    </label>
+  </div>
 
   <div class="status label" id="status"><span class="dot"></span>loading</div>
   <div class="feed" id="feed"></div>

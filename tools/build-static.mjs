@@ -65,6 +65,16 @@ export async function loadNearby({ lat, lng, radius, seen, kind = 'see' }) {
 `, 'utf8');
 
 await cp(join(ROOT, 'web', 'app.js'), join(OUT, 'app.js'));
+await cp(join(ROOT, 'web', 'walkview.js'), join(OUT, 'walkview.js'));
+// The solver is already browser-safe ESM — no rewriting, just a copy. The
+// server build serves the same files from the same URL (see server/index.mjs),
+// so web/walkview.js imports './solver/…' and is identical in both builds.
+// test.mjs stays behind: it is never imported by the page and it is the
+// largest file in the directory.
+await cp(join(ROOT, 'solver'), join(OUT, 'solver'), {
+  recursive: true,
+  filter: (src) => !src.endsWith('test.mjs'),
+});
 await cp(join(ROOT, 'web', 'styles.css'), join(OUT, 'styles.css'));
 
 // index.html, plus the things every kranmal.github.io project carries.

@@ -188,3 +188,89 @@ footer.attrib{padding-top:26px;color:var(--muted);font-size:11.5px;text-align:ce
   .walk b{display:inline;font-size:15px}
   .card h2{font-size:19px}
 }
+
+/* ---------- walk builder ---------- */
+.walkbar{
+  display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;
+  margin-top:12px;padding:12px 14px;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+}
+.walkrow{display:flex;align-items:center;gap:10px;min-width:0}
+.pills{display:flex;gap:5px;flex-wrap:wrap}
+.pills button{
+  padding:6px 11px;border-radius:999px;border:1px solid var(--line);
+  background:var(--bg);color:var(--muted);
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;
+}
+.pills button[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.walkbar .meal{cursor:pointer;font-size:14px;color:var(--muted)}
+.walkbar .meal input{accent-color:var(--accent);width:17px;height:17px}
+.walkbar .meal:hover{color:var(--ink)}
+
+.routeStats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:8px;
+  margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface);
+}
+.stat{display:flex;flex-direction:column;gap:1px;min-width:0}
+.stat b{font-size:19px;font-weight:600;letter-spacing:-.01em;font-variant-numeric:tabular-nums}
+.stat span{
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+}
+
+.route{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column}
+.route .leg{
+  display:flex;align-items:center;gap:12px;padding:0 0 0 15px;min-height:34px;
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11px;color:var(--muted);
+}
+/* The dotted rule *is* the leg — the walking between two stops, drawn as the
+   gap it actually is rather than as another box. */
+.route .legLine{width:2px;align-self:stretch;background:repeating-linear-gradient(
+  to bottom,var(--line) 0 4px,transparent 4px 8px);flex:none;margin-left:12px}
+.route .stop{
+  display:grid;grid-template-columns:auto 1fr auto;align-items:start;gap:0 13px;
+  background:var(--surface);border:1px solid var(--line);border-radius:14px;
+  padding:14px;box-shadow:var(--shadow-sm);
+}
+.route .stop.meal{border-color:var(--amber);background:var(--amber-soft)}
+.route .pip{
+  width:26px;height:26px;border-radius:50%;flex:none;
+  display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;font-weight:600;
+}
+.route .stop.meal .pip{background:var(--surface);color:var(--amber)}
+.stopBody{min-width:0}
+.stopWhen{
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11px;color:var(--muted);display:flex;gap:8px;align-items:baseline;
+}
+.stopWhen b{color:var(--ink);font-size:13px;font-variant-numeric:tabular-nums}
+.stopBody h3{font-size:18px;font-weight:600;letter-spacing:-.01em;margin:3px 0 0;line-height:1.25}
+.stopBody .why{margin:3px 0 0;font-size:15px}
+.routeEnd{
+  display:flex;align-items:baseline;gap:9px;margin-top:14px;padding:12px 14px;
+  border:1px dashed var(--line);border-radius:14px;
+  font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  font-size:11px;color:var(--muted);
+}
+.routeEnd b{font-size:15px;color:var(--ink);font-variant-numeric:tabular-nums}
+
+@media (max-width:430px){
+  /* Four tabs, not three: the labels have to give up some of their padding
+     before "Walk" starts wrapping. */
+  .tabs button{padding:8px 4px;letter-spacing:.02em}
+  /* The label sits above a full-width row of pills; beside them it wrapped to
+     two lines and pushed 180 min onto a second row of its own. */
+  .walkbar{flex-direction:column;align-items:stretch;gap:12px}
+  .walkrow{flex-direction:column;align-items:flex-start;gap:7px}
+  .walkbar .meal{flex-direction:row;align-items:center}
+  .pills{display:grid;grid-template-columns:repeat(4,1fr);width:100%}
+  .pills button{padding:7px 2px;text-align:center}
+  .routeStats{grid-template-columns:repeat(2,1fr);gap:12px 8px}
+  /* The directions button drops under the stop rather than squeezing the name
+     into a two-word column. */
+  .route .stop{grid-template-columns:auto 1fr}
+  .route .stop .dirs{grid-column:2;margin-top:10px;justify-self:start}
+  .stopBody h3{font-size:17px}
+}

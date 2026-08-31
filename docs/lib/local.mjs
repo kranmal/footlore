@@ -15,7 +15,7 @@
 import { fetchNearby } from './overpass.mjs';
 import { enrich } from './wiki.mjs';
 import { cleanExtract } from './narrate.mjs';
-import { rank } from './score.mjs';
+import { rank, hoursToday } from './score.mjs';
 
 const WIDEN_TO = [2500];
 const ENOUGH = 5;
@@ -51,7 +51,7 @@ const TRADES = new Set([
   'variety_store', 'general', 'kiosk', 'boutique', 'deli', 'bakery',
 ]);
 
-function typeWord(p) {
+export function typeWord(p) {
   if (p.amenity && AMENITY_WORD[p.amenity]) return AMENITY_WORD[p.amenity];
   if (p.shop) {
     const w = p.shop.replace(/_/g, ' ');
@@ -78,7 +78,7 @@ function cuisineWords(cuisine) {
  * The card line, built only from tags. Every clause here is a tag being read
  * out, not a description being written.
  */
-function describe(p) {
+export function describe(p) {
   const t = p.tags ?? {};
   const cuisine = cuisineWords(p.cuisine);
   const type = typeWord(p);
@@ -108,7 +108,7 @@ function describe(p) {
  * story strength drives on the sights feed, so a place somebody has taken the
  * trouble to describe sorts above a bare pin at the same distance.
  */
-function detailOf(p) {
+export function detailOf(p) {
   const t = p.tags ?? {};
   let score = 0;
   const words = p.extract ? p.extract.split(/\s+/).length : 0;
@@ -126,7 +126,7 @@ function detailOf(p) {
   return Math.min(score, 1);
 }
 
-function keep(p, kind) {
+export function keep(p, kind) {
   if (kind === 'shop') {
     if (p.amenity === 'marketplace') return true;
     if (!p.shop) return false;
@@ -208,6 +208,9 @@ function publicShape(p, kind) {
     metres: p.metres,
     open: p.open,
     hours: p.openingHours ?? null,
+    windowToday: hoursToday(p.openingHours) ?? null,
+    amenity: p.amenity ?? null,
+    shopTag: p.shop ?? null,
     fee: null,
     story: +p.story.toFixed(3),
     rankScore: +p.rankScore.toFixed(3),

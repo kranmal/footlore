@@ -15,11 +15,18 @@ import { fileURLToPath } from 'node:url';
 import { feed } from './places.mjs';
 
 const ROOT = fileURLToPath(new URL('../web/', import.meta.url));
+// The solver is plain browser-safe ESM and the page imports it directly, so it
+// is served as-is rather than copied into web/. The static build copies it into
+// docs/solver/ instead, which puts it at the same URL in both builds.
+const SOLVER = fileURLToPath(new URL('../solver/', import.meta.url));
 const PORT = Number(process.env.PORT ?? 4173);
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
+  // Without this the solver modules go out as octet-stream and the browser
+  // refuses to execute them — a module script has a strict MIME check.
+  '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8',
   '.svg': 'image/svg+xml',
   '.json': 'application/json; charset=utf-8',
@@ -68,8 +75,10 @@ async function handleNearby(url, res) {
 
 async function serveStatic(pathname, res) {
   const rel = normalize(pathname === '/' ? '/index.html' : pathname).replace(/^(\.\.[/\\])+/, '');
-  const file = join(ROOT, rel);
-  if (!file.startsWith(ROOT)) return send(res, 403, { error: 'no' });
+  const solving = rel.startsWith('/solver/') || rel.startsWith('solver/');
+  const base = solving ? SOLVER : ROOT;
+  const file = join(base, solving ? rel.replace(/^\/?solver\//, '') : rel);
+  if (!file.startsWith(base)) return send(res, 403, { error: 'no' });
   try {
     const body = await readFile(file);
     res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' });
