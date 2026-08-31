@@ -11,7 +11,14 @@ import { fileURLToPath } from 'node:url';
 
 // FOOTLORE_CACHE lets a host point this at a writable volume; the default keeps
 // the cache next to the code so it survives a restart in development.
-const ROOT = process.env.FOOTLORE_CACHE ?? join(dirname(fileURLToPath(import.meta.url)), '..', '.cache');
+const BASE = process.env.FOOTLORE_CACHE ?? join(dirname(fileURLToPath(import.meta.url)), '..', '.cache');
+// Bumped when a bug means entries already on disk cannot be trusted. v2: before
+// the stale-mirror guard in overpass.mjs, a mirror answering 200 with an empty
+// database got its "nothing is mapped here" cached for a week. The guard stops
+// new ones; nothing reaches the poisoned entries already written, so the whole
+// generation is abandoned instead. Old directories are left alone rather than
+// deleted — this process is not the only thing that may have a view on them.
+const ROOT = join(BASE, 'v2');
 
 export const TTL = {
   osm: 7 * 24 * 60 * 60 * 1000,      // street furniture barely moves
@@ -48,7 +55,12 @@ export async function through(ns, key, ttl, fn) {
   const hit = await get(ns, key, ttl);
   if (hit !== null) return { value: hit, cached: true };
   const value = await fn();
-  await set(ns, key, value);
+  // An empty list is never worth a week. Every array stored here is a list of
+  // places, and "no places" is both the cheapest answer to ask for again and
+  // the most expensive one to be wrong about: cached, it tells somebody
+  // standing in a city centre that nothing is around them, and keeps telling
+  // them until the TTL runs out. Re-asking costs one query.
+  if (!(Array.isArray(value) && value.length === 0)) await set(ns, key, value);
   return { value, cached: false };
 }
 

@@ -7,7 +7,12 @@
 //
 // Same exported shape as cache.mjs, so nothing upstream knows the difference.
 
-const PREFIX = 'fl.cache.';
+// Versioned, and bumped when entries already in a visitor's browser cannot be
+// trusted — see the same note in cache.mjs. A returning visitor's poisoned
+// tiles are unreachable after the bump, and swept below so they stop taking up
+// a share of the 5 MB.
+const PREFIX = 'fl.cache.v2.';
+const LEGACY = 'fl.cache.';
 const BUDGET = 4_000_000;   // ~4 MB of the usual 5 MB localStorage allowance
 
 export const TTL = {
@@ -19,11 +24,28 @@ export const TTL = {
 const safe = (s) => String(s).replace(/[^a-z0-9._-]/gi, '_');
 const k = (ns, key) => `${PREFIX}${safe(ns)}.${safe(key)}`;
 
+/** Drop every entry from a previous cache generation. Once per page load. */
+let swept = false;
+function sweepOldGenerations(ls) {
+  if (swept) return;
+  swept = true;
+  try {
+    const stale = [];
+    for (let i = 0; i < ls.length; i += 1) {
+      const key = ls.key(i);
+      if (key?.startsWith(LEGACY) && !key.startsWith(PREFIX)) stale.push(key);
+    }
+    for (const key of stale) ls.removeItem(key);
+  } catch { /* nothing here is worth failing a page load over */ }
+}
+
 // Private browsing and blocked site-data both throw on access rather than
 // returning null, so every entry point has to survive the store not existing.
 function store() {
   try {
-    return window.localStorage;
+    const ls = window.localStorage;
+    sweepOldGenerations(ls);
+    return ls;
   } catch {
     return null;
   }
@@ -80,7 +102,8 @@ export async function through(ns, key, ttl, fn) {
   const hit = await get(ns, key, ttl);
   if (hit !== null) return { value: hit, cached: true };
   const value = await fn();
-  await set(ns, key, value);
+  // Not cached when empty — same reasoning as cache.mjs, and the same bug.
+  if (!(Array.isArray(value) && value.length === 0)) await set(ns, key, value);
   return { value, cached: false };
 }
 
