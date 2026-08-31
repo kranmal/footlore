@@ -3,7 +3,9 @@
 A pocket tour guide. It reads the ground you're standing on: what's nearby, and
 one sentence on why it's worth crossing the road for.
 
-Phase 01 — sights only. No food layer, no map, no accounts.
+Three tabs — **Sights**, **Food**, **Shops** — and a directions button on every
+card that hands the walk to the phone's own map app. No map of its own, no
+accounts.
 
 ```bash
 npm start          # http://localhost:4173
@@ -27,6 +29,24 @@ rate-limited, Wikipedia is polite-use, and narration costs money.
 returns ~470 mapped objects and roughly 380 of them are dropped before ranking,
 including a Royal Mail post box tagged `historic=memorial`. A short feed of
 things worth seeing beats a long one you have to filter yourself.
+
+## Food and shops
+
+The other two tabs run the same fetch-rank-show pipeline with the story floor
+taken out, because "is there anything to say about this?" is the wrong question
+to ask of a sandwich shop. What replaces it is deliberately modest:
+
+- **No ratings, anywhere.** OpenStreetMap does not carry them, and every source
+  that does charges per request and cannot be reached from a static page at all.
+  So these lists are ordered by distance, by opening hours, and by how much the
+  map actually records — never by quality, and the feed says so on screen.
+- **Lines are read off the tags**, not written: cuisine, diet, outdoor seating,
+  takeaway, step-free access. Where nothing but a name is mapped, the card says
+  that too.
+- **Wikipedia articles are not quoted here.** A shop pin's article is usually
+  about the building it stands in — quoting "part rebuilt as a facsimile in
+  1993" under a travel agent's name would be true of the wall and false of the
+  business. The article is shown in the detail sheet, labelled as what it is.
 
 ## Accuracy
 

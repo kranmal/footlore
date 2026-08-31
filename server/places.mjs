@@ -9,6 +9,16 @@ import { fetchNearby } from './overpass.mjs';
 import { enrich } from './wiki.mjs';
 import { narrate, cleanExtract } from './narrate.mjs';
 import { storyStrength, rank, STORY_FLOOR } from './score.mjs';
+import { nearbyLocal } from './local.mjs';
+
+/**
+ * The one entry point the front end has: three tabs, one shape back.
+ * Sights go through the story pipeline below; food and shops go through
+ * local.mjs, which makes no claim this file's pipeline can't back up.
+ */
+export function feed({ kind = 'see', ...rest }) {
+  return kind === 'see' ? nearby(rest) : nearbyLocal({ ...rest, kind });
+}
 
 /**
  * @returns {Promise<{places:object[], meta:object}>}
@@ -47,6 +57,7 @@ export async function nearby({ lat, lng, radius = 900, limit = 25, seen = [], mi
   return {
     places: final.map(publicShape),
     meta: {
+      kind: 'see',
       found: pass.found,
       belowFloor: pass.belowFloor,
       shown: final.length,
@@ -56,6 +67,7 @@ export async function nearby({ lat, lng, radius = 900, limit = 25, seen = [], mi
       thin: final.length < minResults,
       osmCached: pass.cached,
       narration: mode,
+      rated: false,
       narrated: generated,
       rejectedLines: rejected,
       ms: Date.now() - t0,

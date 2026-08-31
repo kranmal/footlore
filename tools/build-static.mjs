@@ -21,7 +21,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = process.argv[2] ? join(process.cwd(), process.argv[2]) : join(ROOT, 'docs');
 
-const LIB = ['places.mjs', 'overpass.mjs', 'wiki.mjs', 'score.mjs', 'narrate.mjs'];
+const LIB = ['places.mjs', 'local.mjs', 'overpass.mjs', 'wiki.mjs', 'score.mjs', 'narrate.mjs'];
 
 /** Rewrites that turn a server module into a browser module. */
 function browserify(src) {
@@ -51,7 +51,7 @@ await writeFile(join(OUT, 'lib', 'geo.mjs'), await read('solver/geo.mjs'), 'utf8
 
 // The data adapter: run the pipeline here instead of asking a server to.
 await writeFile(join(OUT, 'api.js'), `// Data adapter — static build. No server: the pipeline runs in this tab.
-import { nearby } from './lib/places.mjs';
+import { feed } from './lib/places.mjs';
 
 // This build is quoting-only and always will be. Saying "set a key" here would
 // be advice nobody reading it can take.
@@ -59,8 +59,8 @@ export const QUOTING_NOTE =
   'This version runs entirely in your browser with no server behind it, so there is nowhere to keep ' +
   'an API key — quoting is the only honest option, and it is the accurate one.';
 
-export async function loadNearby({ lat, lng, radius, seen }) {
-  return nearby({ lat, lng, radius, limit: 20, seen });
+export async function loadNearby({ lat, lng, radius, seen, kind = 'see' }) {
+  return feed({ kind, lat, lng, radius, limit: 20, seen });
 }
 `, 'utf8');
 
