@@ -15,6 +15,11 @@ npm run probe      # the same pipeline, printed to a terminal
 
 No dependencies. Node 20 or newer, nothing to install.
 
+Those same tests run on every pull request, along with a check that `docs/` —
+the committed static build — still matches the source it is generated from. A
+stale `docs/` is invisible locally and wrong on the live site, which is the
+kind of thing CI is for.
+
 ## What it does
 
 ```
