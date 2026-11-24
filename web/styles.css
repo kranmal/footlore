@@ -274,3 +274,10 @@ footer.attrib{padding-top:26px;color:var(--muted);font-size:11.5px;text-align:ce
   .route .stop .dirs{grid-column:2;margin-top:10px;justify-self:start}
   .stopBody h3{font-size:17px}
 }
+
+/* Touch targets: >=44px on touch devices */
+@media (pointer:coarse), (max-width:640px){
+  button, [role="tab"], select{min-height:44px}
+  #theme, #refresh{min-width:44px;min-height:44px}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
