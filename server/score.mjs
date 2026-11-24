@@ -99,13 +99,17 @@ export function hoursToday(oh, now = new Date()) {
   const today = days[now.getDay()];
   const ranges = [];
   let understood = false;
+  let skipped = false;           // a rule this parser could not read
 
   for (const rule of oh.split(';').map((r) => r.trim())) {
     // `Mo-Su 12:00-14:30,17:00-22:00` — a kitchen that shuts in the afternoon.
     // Common enough among the places a walk is routed around that reading it as
     // "unknown" would throw away the one constraint the solver actually has.
+    // `Su off` / `Mo closed`: a shut day adds no range, and on its own says
+    // nothing about the other days, so it does not count as understood.
+    if (/^[A-Za-z,\-]+\s+(off|closed)$/i.test(rule)) continue;
     const m = rule.match(/^([A-Za-z,\-]+)?\s*((?:\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})(?:\s*,\s*\d{1,2}:\d{2}\s*-\s*\d{1,2}:\d{2})*)$/);
-    if (!m) continue;
+    if (!m) { skipped = true; continue; }
     understood = true;
     const [, dayPart, spans] = m;
     if (dayPart && !dayPart.includes(today)) {
@@ -124,6 +128,9 @@ export function hoursToday(oh, now = new Date()) {
   }
 
   if (!understood) return null;      // a form this parser doesn't read
+  // A rule we could not read might be the one that covers today (`Sa 09:00-13:00+`,
+  // `sunrise-sunset`). Finding nothing for today is only "shut" if every rule was read.
+  if (skipped && !ranges.length) return null;
   return ranges;                     // [] means "understood, and shut today"
 }
 

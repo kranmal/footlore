@@ -106,12 +106,12 @@ function card(p) {
     main.append(img);
   }
 
-  const meta = [p.walkMinutes < 1 ? null : distance(p), p.built && `built ${p.built}`, p.readMinutes && `${p.readMinutes} min read`]
+  const meta = [p.walkMinutes < 1 ? null : distance(p), p.built && `built ${p.built}`, p.checked && `checked ${p.checked}`, p.readMinutes && `${p.readMinutes} min read`]
     .filter(Boolean)
     .map((t) => node('span', '', [text(t)]));
 
   main.append(node('div', 'body', [
-    node('div', 'head', [chip(p.label), p.open === true ? chip('open now', 'chip open') : null]),
+    node('div', 'head', [chip(p.label), hoursChip(p)]),
     node('h2', '', [text(p.name)]),
     node('p', 'why', [text(p.why)]),
     node('div', 'meta', meta),
@@ -301,27 +301,40 @@ async function loadWalk({ force = false } = {}) {
   }
 }
 
+let lastMeta = null;
+let onlyOpen = false;
+
 function render(meta) {
+  lastMeta = meta;
+  const local = meta.kind === 'food' || meta.kind === 'shop';
+  el('openbar').hidden = !local;
+  // Food and shops: a place whose mapped hours say it is shut right now is
+  // not worth a walk, so it is hidden (and counted). Places with no hours
+  // mapped stay, flagged, because "unknown" is not "closed" — unless the
+  // reader asks for confirmed-open only.
+  const list = !local ? places : places.filter((p) => p.open !== false && (!onlyOpen || p.open === true));
+  const hiddenShut = local ? places.filter((p) => p.open === false).length : 0;
+  const hiddenUnknown = local && onlyOpen ? places.filter((p) => p.open === null).length : 0;
   const tab = TABS.find((t) => t.kind === (meta.kind ?? 'see'));
 
   status.replaceChildren(html(
-    `<span class="dot"></span>${meta.shown} nearby · ${(meta.ms / 1000).toFixed(1)}s · ` +
+    `<span class="dot"></span>${list.length} nearby · ${(meta.ms / 1000).toFixed(1)}s · ` +
     (meta.kind === 'see' || !meta.kind
       ? `${meta.found} candidates, ${meta.belowFloor} below the story floor · ` +
         (meta.narration === 'extractive'
           ? '<span class="warn">quoted from Wikipedia</span>'
           : `narrated by Claude${meta.rejectedLines ? ` · ${meta.rejectedLines} line(s) rejected as unsourced` : ''}`)
-      : `${meta.found} mapped · <span class="warn">not ranked by quality</span>`),
+      : `${meta.found} mapped · ` + (hiddenShut ? `${hiddenShut} shut now, hidden · ` : '') + '<span class="warn">not ranked by quality</span>'),
   ));
 
-  feed.replaceChildren(...places.map(card));
+  feed.replaceChildren(...list.map(card));
 
   if (meta.widenedFrom) {
     feed.prepend(html(`<div class="note">Not much within ${meta.widenedFrom} m, so this is ` +
       `everything inside ${meta.radius} m. Distances are longer than usual.</div>`));
   }
 
-  if (!places.length) {
+  if (!list.length) {
     feed.replaceChildren(html(`<div class="note"><b>${tab.empty} within ${meta.radius} m.</b><br>` +
       (meta.kind === 'see' || !meta.kind
         ? `That is a real answer, not an error — ` +
@@ -340,11 +353,17 @@ function render(meta) {
       feed.append(html(`<div class="note">Every line here is a sentence quoted from the Wikipedia intro — ` +
         `dull, but nothing is paraphrased or inferred. ${QUOTING_NOTE}</div>`));
     }
-  } else if (places.length) {
+  } else if (list.length) {
     feed.append(html(`<div class="note"><b>No ratings, on purpose.</b> OpenStreetMap doesn't record them, ` +
       `and there is no free source that does — so this list is ordered by how close each place is and how ` +
       `much the map actually says about it, never by how good it is. Each line is read straight off the ` +
       `map tags: cuisine, seating, takeaway. Hours are shown where they are mapped, and may be out of date.</div>`));
+    feed.append(html(`<div class="note"><b>Open now, as far as the map knows.</b> ` +
+      `${hiddenShut ? `${hiddenShut} place${hiddenShut === 1 ? '' : 's'} whose mapped hours say shut right now ${hiddenShut === 1 ? 'is' : 'are'} hidden. ` : ''}` +
+      `${hiddenUnknown ? `${hiddenUnknown} with no hours mapped ${hiddenUnknown === 1 ? 'is' : 'are'} hidden too. ` : ''}` +
+      `This is OpenStreetMap, edited by volunteers: a shop that closed and was never updated can still be listed, ` +
+      `and "open now" is only as current as its hours. Places marked closed or disused on the map are already left out. ` +
+      `Tap a card for the map entry, and fix it there if it is wrong.</div>`));
   }
   el('attrib').textContent = meta.attribution.join('  ·  ');
 }
@@ -370,6 +389,12 @@ function html(s) {
   // dropped the text after `<span class="dot"></span>`.
   return t.content.childNodes.length > 1 ? t.content : t.content.firstChild;
 }
+/** Open now where the map's hours say so; an explicit gap where they are missing. */
+function hoursChip(p) {
+  if (p.open === true) return chip('open now', 'chip open');
+  if (p.open === null && (p.kind === 'food' || p.kind === 'shop')) return chip('hours not mapped', 'chip unknown');
+  return null;
+}
 function chip(label, cls = 'chip') { return label ? node('span', cls, [text(label)]) : null; }
 
 for (const mins of BUDGETS) {
@@ -386,6 +411,10 @@ for (const mins of BUDGETS) {
   });
   el('budgets').append(b);
 }
+el('onlyOpen').addEventListener('change', (e) => {
+  onlyOpen = e.target.checked;
+  if (lastMeta && (kind === 'food' || kind === 'shop')) render(lastMeta);
+});
 el('wantMeal').addEventListener('change', (e) => {
   wantMeal = e.target.checked;
   loadWalk();
