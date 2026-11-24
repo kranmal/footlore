@@ -15,6 +15,32 @@ const MAX_Z = 19;
 const TILES = (z, x, y) => `https://tile.openstreetmap.org/${z}/${x}/${y}.png`;
 const SVG = 'http://www.w3.org/2000/svg';
 
+// Street routing: the FOSSGIS foot profile over OpenStreetMap's own paths. A
+// public, keyless demo service that allows browser requests; used once per
+// walk, and the map is fully usable without it (straight legs) if it is slow
+// or down.
+const ROUTER = 'https://routing.openstreetmap.de/routed-foot/route/v1/foot/';
+const ROUTE_TIMEOUT = 8000;
+
+/** One request for the whole loop: [{lat,lng}...] -> {line:[[lat,lng]...], metres, minutes, legs} or null. */
+async function streetRoute(points) {
+  const coords = points.map((p) => `${p.lng.toFixed(6)},${p.lat.toFixed(6)}`).join(';');
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), ROUTE_TIMEOUT);
+  try {
+    const r = await fetch(`${ROUTER}${coords}?overview=full&geometries=geojson&steps=false`, { signal: ctl.signal });
+    if (!r.ok) return null;
+    const j = await r.json();
+    const route = j.code === 'Ok' ? j.routes?.[0] : null;
+    if (!route?.geometry?.coordinates?.length) return null;
+    return {
+      line: route.geometry.coordinates.map(([lng, lat]) => ({ lat, lng })),
+      metres: route.distance,
+      minutes: route.duration / 60,
+    };
+  } catch { return null; } finally { clearTimeout(timer); }
+}
+
 const world = (z) => TILE * 2 ** z;
 const px = (lng, z) => ((lng + 180) / 360) * world(z);
 const py = (lat, z) => {
@@ -63,7 +89,7 @@ export function renderMap(into, { here, result, budget }) {
       kind: s.kind, arrive: s.arrive,
     })),
   ];
-  const line = [...pts, pts[0]];
+  const straight = [...pts, pts[0]];
 
   const box = node('div', 'map');
   box.setAttribute('role', 'img');
@@ -88,15 +114,15 @@ export function renderMap(into, { here, result, budget }) {
     ]));
   }
 
-  into.replaceChildren(
-    box, legend,
-    node('div', 'note', [
-      node('b', '', [text('This is the order, not the streets. ')]),
-      text('The dashed line joins the stops in the order you would visit them, straight from one to the next. ' +
-        'It is what the walking times were estimated from, so a river or a railway between two stops is not drawn around. ' +
-        `Back at ${clock(sched.finish)}${sched.total > budget ? `, ${sched.total - budget} min over the ${budget} you asked for` : ''}.`),
-    ]),
-  );
+  const back = `Back at ${clock(sched.finish)}${sched.total > budget ? `, ${sched.total - budget} min over the ${budget} you asked for` : ''}.`;
+  const note = node('div', 'note', [
+    node('b', '', [text('Finding the street route… ')]),
+    text('Until it arrives, the dashed line joins the stops in order, straight from one to the next. ' + back),
+  ]);
+  into.replaceChildren(box, legend, note);
+
+  // Set when the street route arrives; draw() prefers it over the straight legs.
+  let street = null;
 
   // View state: zoom and the world-pixel point at the centre of the box.
   let z = 15, cx = 0, cy = 0, w = 0, h = 0;
@@ -135,9 +161,10 @@ export function renderMap(into, { here, result, budget }) {
     const at = (p) => [px(p.lng, z) - left, py(p.lat, z) - top];
     overlay.setAttribute('viewBox', `0 0 ${w} ${h}`);
     overlay.replaceChildren();
+    const path = (street?.line ?? straight).map((p) => at(p).join(',')).join(' ');
     overlay.append(
-      svg('polyline', { class: 'routeCasing', points: line.map((p) => at(p).join(',')).join(' ') }),
-      svg('polyline', { class: 'routeLine', points: line.map((p) => at(p).join(',')).join(' ') }),
+      svg('polyline', { class: 'routeCasing', points: path }),
+      svg('polyline', { class: `routeLine${street ? ' onStreet' : ''}`, points: path }),
     );
     // Start last-but-one so a stop sitting on top of it stays readable.
     for (const p of [...pts].reverse()) {
@@ -223,6 +250,24 @@ export function renderMap(into, { here, result, budget }) {
     if (first) { first = false; frame(); }
     draw();
   }).observe(box);
+
+  streetRoute(straight).then((r) => {
+    if (!box.isConnected) return;                       // tab changed while it was in flight
+    if (!r) {
+      note.replaceChildren(
+        node('b', '', [text('Street route unavailable. ')]),
+        text('The routing service did not answer, so the dashed line is just the stops in order, straight from one to the next — ' +
+          'a river or a railway between two stops is not drawn around. ' + back));
+      return;
+    }
+    street = r;
+    note.replaceChildren(
+      node('b', '', [text(`Along the streets: ${(r.metres / 1000).toFixed(1)} km, about ${Math.round(r.minutes)} min of walking. `)]),
+      text('Routed over OpenStreetMap footpaths and roads by routing.openstreetmap.de. ' +
+        `The timings above are still the planner's estimates (${sched.walking} min of walking, straight-line × 1.35), ` +
+        'so the two will not match exactly. ' + back));
+    draw();
+  });
 
   return true;
 }
