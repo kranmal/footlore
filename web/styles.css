@@ -320,3 +320,4 @@ footer.attrib{padding-top:26px;color:var(--muted);font-size:11.5px;text-align:ce
 .mapLegend .legName{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mapLegend .legTime{font:12px "IBM Plex Mono",ui-monospace,Menlo,monospace;color:var(--muted)}
 .mapRoute .routeLine.onStreet{stroke-dasharray:none;stroke-width:4}
+.chip.unknown{background:transparent;border:1px dashed var(--line);color:var(--muted)}

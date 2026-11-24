@@ -126,7 +126,30 @@ export function detailOf(p) {
   return Math.min(score, 1);
 }
 
+/**
+ * OSM keeps places that have closed — a shop is tagged disused rather than
+ * deleted, or someone writes "(closed)" into the name. Anything the map itself
+ * says is gone is dropped. This cannot catch a shop that closed and that nobody
+ * has edited since; only a person standing there can.
+ */
+export function defunct(p) {
+  const t = p.tags ?? {};
+  if (['disused', 'abandoned', 'closed', 'demolished', 'ruins'].some((k) => t[k] === 'yes')) return true;
+  if (Object.keys(t).some((k) => /^(disused|abandoned|was|removed|former|old):/.test(k))) return true;
+  if (/^(off|closed)$/i.test(String(t.opening_hours ?? '').trim())) return true;
+  return /\b(permanently closed|closed down|closed for good|to let|for rent|vacant)\b|\(closed\)/i.test(p.name ?? '');
+}
+
+/** When somebody last confirmed this place on the ground, if they said. */
+export function checkedOf(p) {
+  const t = p.tags ?? {};
+  const d = t.check_date ?? t['survey:date'] ?? t['check_date:opening_hours'] ?? null;
+  const m = String(d ?? '').match(/^\d{4}(?:-\d{2}(?:-\d{2})?)?/);
+  return m ? m[0] : null;
+}
+
 export function keep(p, kind) {
+  if (defunct(p)) return false;
   if (kind === 'shop') {
     if (p.amenity === 'marketplace') return true;
     if (!p.shop) return false;
@@ -209,6 +232,7 @@ function publicShape(p, kind) {
     open: p.open,
     hours: p.openingHours ?? null,
     windowToday: hoursToday(p.openingHours) ?? null,
+    checked: checkedOf(p),
     amenity: p.amenity ?? null,
     shopTag: p.shop ?? null,
     fee: null,

@@ -7,7 +7,7 @@
 //
 //   node server/local.test.mjs
 
-import { typeWord, describe, detailOf, keep } from './local.mjs';
+import { typeWord, describe, detailOf, keep, defunct, checkedOf } from './local.mjs';
 import { hoursToday, openNow } from './score.mjs';
 
 let pass = 0, fail = 0;
@@ -127,6 +127,20 @@ eq('shut, outside the range', openNow({ openingHours: 'Mo-Fr 12:00-14:00' }, MON
 // The distinction the whole app rests on: unknown is not closed.
 eq('unknown hours are null, never false', openNow({ openingHours: 'sunrise-sunset' }, MON), null);
 eq('no hours at all are null', openNow({ openingHours: null }, MON), null);
+
+// --- verify: places the map itself says are gone or shut --------------------
+ok('a disused shop is dropped', !keep(place({ shop: 'books', tags: { shop: 'books', disused: 'yes' } }), 'shop'));
+ok('a disused:shop leftover is dropped', defunct(place({ shop: 'books', tags: { 'disused:shop': 'books' } })));
+ok('opening_hours=off is dropped', defunct(place({ shop: 'books', tags: { opening_hours: 'off' } })));
+ok('"(closed)" in a name is dropped', defunct(place({ shop: 'books', name: 'Smiths (closed)' })));
+ok('a normal shop is kept', !defunct(place({ shop: 'books', name: 'Waterstones', tags: { opening_hours: 'Mo-Sa 09:00-17:30' } })));
+ok('check_date is read', checkedOf(place({ tags: { check_date: '2024-05-12' } })) === '2024-05-12');
+ok('survey:date year-only is read', checkedOf(place({ tags: { 'survey:date': '2023' } })) === '2023');
+ok('no check date is null', checkedOf(place({ tags: {} })) === null);
+const monday = new Date(2026, 10, 23, 12, 0);
+ok('"Mo-Sa 09:00-17:00; Su off" is open on a Monday', JSON.stringify(hoursToday('Mo-Sa 09:00-17:00; Su off', monday)) === '[[540,1020]]');
+ok('a lone "Su off" is unknown, not shut, on a Monday', hoursToday('Su off', monday) === null);
+ok('an unreadable rule for today is unknown, not shut', hoursToday('Mo-Fr 09:00-17:00; Sa 09:00-13:00+', new Date(2026, 10, 28, 12)) === null);
 
 console.log(`\n\x1b[1m${pass} passed, ${fail} failed\x1b[0m\n`);
 process.exit(fail ? 1 : 0);
