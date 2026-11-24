@@ -78,8 +78,7 @@ await cp(join(ROOT, 'solver'), join(OUT, 'solver'), {
 await cp(join(ROOT, 'web', 'styles.css'), join(OUT, 'styles.css'));
 
 // index.html, plus the things every kranmal.github.io project carries.
-const head = `<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6981194323350325" crossorigin="anonymous"></script>
-</head>`;
+const head = `</head>`;
 const footer = `<footer class="attrib" id="attrib"></footer>
   <footer class="attrib"><a href="https://kranmal.github.io/privacy.html">Privacy</a></footer>`;
 
