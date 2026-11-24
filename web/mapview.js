@@ -100,8 +100,11 @@ export function renderMap(into, { here, result, budget }) {
   const plus = node('button'); plus.type = 'button'; plus.textContent = '+'; plus.ariaLabel = 'Zoom in';
   const minus = node('button'); minus.type = 'button'; minus.textContent = '−'; minus.ariaLabel = 'Zoom out';
   const fit = node('button'); fit.type = 'button'; fit.textContent = '⤢'; fit.ariaLabel = 'Fit the whole walk';
-  ctrl.append(plus, minus, fit);
-  box.append(tiles, overlay, ctrl,
+  const loc = node('button'); loc.type = 'button'; loc.ariaLabel = 'Go to my location'; loc.title = 'Go to my location';
+  loc.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3.5"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/></svg>';
+  const toast = node('div', 'mapToast'); toast.hidden = true; toast.setAttribute('role', 'status');
+  ctrl.append(plus, minus, fit, loc);
+  box.append(tiles, overlay, ctrl, toast,
     node('div', 'mapCredit', [text('© '), Object.assign(document.createElement('a'),
       { href: 'https://www.openstreetmap.org/copyright', target: '_blank', rel: 'noopener', textContent: 'OpenStreetMap contributors' })]));
 
@@ -123,6 +126,7 @@ export function renderMap(into, { here, result, budget }) {
 
   // Set when the street route arrives; draw() prefers it over the straight legs.
   let street = null;
+  let me = null;                                   // {lat, lng, acc} once located
 
   // View state: zoom and the world-pixel point at the centre of the box.
   let z = 15, cx = 0, cy = 0, w = 0, h = 0;
@@ -166,6 +170,16 @@ export function renderMap(into, { here, result, budget }) {
       svg('polyline', { class: 'routeCasing', points: path }),
       svg('polyline', { class: `routeLine${street ? ' onStreet' : ''}`, points: path }),
     );
+    if (me) {
+      const [x, y] = at(me);
+      const g = svg('g', { class: 'mapMe', transform: `translate(${x},${y})` });
+      // Accuracy ring, capped so a coarse fix doesn't swamp the map.
+      const ringPx = Math.min((me.acc || 0) / (156543.03 * Math.cos((me.lat * Math.PI) / 180) / 2 ** z), 120);
+      if (ringPx > 9) g.append(svg('circle', { class: 'ring', r: ringPx }));
+      g.append(svg('circle', { class: 'dot', r: 8 }));
+      const t = svg('title'); t.textContent = 'You are here'; g.append(t);
+      overlay.append(g);
+    }
     // Start last-but-one so a stop sitting on top of it stays readable.
     for (const p of [...pts].reverse()) {
       const [x, y] = at(p);
@@ -193,6 +207,27 @@ export function renderMap(into, { here, result, budget }) {
     z = nz;
     draw();
   }
+
+  let toastTimer;
+  const say = (m) => {
+    toast.textContent = m; toast.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.hidden = true; }, 4500);
+  };
+  loc.onclick = () => {
+    if (!navigator.geolocation) return say('This browser cannot give a location.');
+    loc.disabled = true; loc.classList.add('busy');
+    navigator.geolocation.getCurrentPosition((pos) => {
+      loc.disabled = false; loc.classList.remove('busy');
+      me = { lat: pos.coords.latitude, lng: pos.coords.longitude, acc: pos.coords.accuracy };
+      z = Math.max(z, 16);
+      cx = px(me.lng, z); cy = py(me.lat, z);
+      draw();
+    }, (err) => {
+      loc.disabled = false; loc.classList.remove('busy');
+      say(err.code === 1 ? 'Location is blocked. Allow it for this site in the browser, then try again.'
+        : err.code === 3 ? 'Timed out finding you. Try again.' : 'Could not work out where you are.');
+    }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 });
+  };
 
   plus.onclick = () => zoomTo(z + 1);
   minus.onclick = () => zoomTo(z - 1);
