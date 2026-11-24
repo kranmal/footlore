@@ -5,8 +5,8 @@ one sentence on why it's worth crossing the road for.
 
 Five tabs — **Sights**, **Food**, **Shops**, **Walk**, **Map** — and a directions
 button on every card that hands the walk to the phone's own map app. The Map tab
-draws the walk on OpenStreetMap tiles (straight lines between stops, not a street
-route). No accounts.
+draws the walk on OpenStreetMap tiles (with the street route from
+routing.openstreetmap.de, or straight lines if that is down). No accounts.
 
 ```bash
 npm start          # http://localhost:4173
