@@ -16,9 +16,13 @@ import { through, tileKey, TTL } from './cache.mjs';
 // database (`timestamp_osm_base: "118705"`, zero nodes in central Bristol), and
 // in the browser build it used to be the *only* fallback, so one bad minute at
 // the primary surfaced as "Couldn't load the feed". private.coffee is a public
-// instance with no stated usage cap and gives the page a second real mirror.
+// instance with no stated usage cap and gives the page a further mirror.
+// overpass.openstreetmap.fr was checked from a browser on 2026-11-24, when the
+// primary refused connections, private.coffee timed out and osm.ch was stale:
+// it answered the real query with CORS headers, a valid date, in ~350 ms.
 const ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
+  'https://overpass.openstreetmap.fr/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
   'https://overpass.osm.ch/api/interpreter',
 ];
