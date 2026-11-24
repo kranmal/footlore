@@ -28,30 +28,71 @@ export const TTL = {
 
 const safe = (s) => String(s).replace(/[^a-z0-9._-]/gi, '_');
 
+// Directories are created once per process, not once per read: a feed makes
+// dozens of cache lookups and each used to start with an mkdir syscall.
+const made = new Set();
 async function path(ns, key) {
   const dir = join(ROOT, safe(ns));
-  await mkdir(dir, { recursive: true });
+  if (!made.has(dir)) {
+    await mkdir(dir, { recursive: true });
+    made.add(dir);
+  }
   return join(dir, `${safe(key)}.json`);
 }
 
+// Hot entries live in memory too, so a repeat request never touches the disk.
+// Capped and insertion-ordered like `recent` in index.mjs: this process is meant
+// to stay up for weeks. Each entry keeps its write time so TTLs behave exactly
+// as they do on disk.
+const MEM_MAX = 2000;
+const mem = new Map();
+
+function remember(id, t, value) {
+  mem.delete(id);
+  mem.set(id, { t, value });
+  while (mem.size > MEM_MAX) mem.delete(mem.keys().next().value);
+}
+
 export async function get(ns, key, ttl = TTL.osm) {
+  const id = `${ns}\0${key}`;
+  const hot = mem.get(id);
+  if (hot) {
+    if (ttl === Infinity || Date.now() - hot.t <= ttl) return hot.value;
+    return null;
+  }
   try {
     const p = await path(ns, key);
     const s = await stat(p);
+    const value = JSON.parse(await readFile(p, 'utf8'));
+    remember(id, s.mtimeMs, value);
     if (ttl !== Infinity && Date.now() - s.mtimeMs > ttl) return null;
-    return JSON.parse(await readFile(p, 'utf8'));
+    return value;
   } catch {
     return null;
   }
 }
 
 export async function set(ns, key, value) {
+  remember(`${ns}\0${key}`, Date.now(), value);
   await writeFile(await path(ns, key), JSON.stringify(value), 'utf8');
   return value;
 }
 
+// Two people on the same street corner ask for the same tile within seconds of
+// each other, and a cold Overpass call can take half a minute. Without this the
+// second request starts its own query and both wait; with it they share one.
+const inflight = new Map();
+
 /** get-or-compute. Every provider call in the app goes through this. */
-export async function through(ns, key, ttl, fn) {
+export function through(ns, key, ttl, fn) {
+  const id = `${ns}\0${key}`;
+  if (inflight.has(id)) return inflight.get(id).then((r) => ({ ...r, cached: true }));
+  const run = compute(ns, key, ttl, fn).finally(() => inflight.delete(id));
+  inflight.set(id, run);
+  return run;
+}
+
+async function compute(ns, key, ttl, fn) {
   const hit = await get(ns, key, ttl);
   if (hit !== null) return { value: hit, cached: true };
   const value = await fn();

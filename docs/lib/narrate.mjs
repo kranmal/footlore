@@ -189,8 +189,9 @@ export async function narrate(places) {
   const out = [...places];
   const todo = [];
 
+  const hits = await Promise.all(out.map((p) => get('why', p.id, TTL.narration)));
   for (let i = 0; i < out.length; i++) {
-    const hit = await get('why', out[i].id, TTL.narration);
+    const hit = hits[i];
     const stale = hit?.source === 'extractive' && hit.v !== EXTRACTIVE_VERSION;
     if (hit && !stale) out[i] = { ...out[i], why: hit.why, whySource: hit.source };
     else todo.push(i);
@@ -208,6 +209,7 @@ export async function narrate(places) {
   }
 
   let rejected = 0;
+  const writes = [];
   for (let n = 0; n < todo.length; n++) {
     const i = todo[n];
     let fromModel = lines?.[n];
@@ -225,12 +227,13 @@ export async function narrate(places) {
     const source = fromModel ? 'claude' : 'extractive';
     if (why) {
       out[i] = { ...out[i], why, whySource: source };
-      await set('why', out[i].id, { why, source, v: EXTRACTIVE_VERSION });
+      writes.push(set('why', out[i].id, { why, source, v: EXTRACTIVE_VERSION }));
     } else {
       out[i] = { ...out[i], why: null, whySource: null };
     }
   }
 
+  await Promise.all(writes);
   return {
     places: out,
     mode: lines ? 'claude' : 'extractive',

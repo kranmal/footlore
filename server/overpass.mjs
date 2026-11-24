@@ -120,6 +120,53 @@ function normalise(el, kind) {
   };
 }
 
+// A slow first mirror used to hold everything up for its full 30 s timeout
+// before the second was even tried. Now the next mirror starts as soon as the
+// current one fails, or after HEDGE_MS of silence, and whichever answers first
+// wins. Still at most one extra request per HEDGE_MS, so a healthy primary is
+// never doubled up on — only a struggling one is.
+const HEDGE_MS = 8_000;
+const ATTEMPT_MS = 30_000;
+
+function firstAnswer(q) {
+  return new Promise((resolve, reject) => {
+    const controllers = [];
+    let next = 0, running = 0, done = false, lastErr, hedge;
+
+    const finish = (fn, v) => {
+      if (done) return;
+      done = true;
+      clearTimeout(hedge);
+      for (const c of controllers) c.abort();
+      fn(v);
+    };
+
+    const launch = () => {
+      if (done || next >= ENDPOINTS.length) return;
+      const url = ENDPOINTS[next++];
+      const ac = new AbortController();
+      controllers.push(ac);
+      const timer = setTimeout(() => ac.abort(), ATTEMPT_MS);
+      running += 1;
+      clearTimeout(hedge);
+      if (next < ENDPOINTS.length) hedge = setTimeout(launch, HEDGE_MS);
+
+      post(url, q, ac.signal).then(
+        (json) => { clearTimeout(timer); finish(resolve, json); },
+        (e) => {
+          clearTimeout(timer);
+          lastErr = e;
+          running -= 1;
+          if (done) return;
+          if (next < ENDPOINTS.length) launch();
+          else if (running === 0) finish(reject, new Error(`all Overpass endpoints failed: ${lastErr?.message}`));
+        },
+      );
+    };
+    launch();
+  });
+}
+
 /**
  * @returns {Promise<{places: object[], cached: boolean}>}
  */
@@ -128,19 +175,8 @@ export async function fetchNearby(lat, lng, radius = 900, kind = 'see') {
   const ns = kind === 'see' ? 'osm' : `osm-${kind}`;
   const { value, cached } = await through(ns, key, TTL.osm, async () => {
     const q = query(lat, lng, radius, kind);
-    let lastErr;
-    for (const url of ENDPOINTS) {
-      try {
-        const ac = new AbortController();
-        const timer = setTimeout(() => ac.abort(), 30_000);
-        const json = await post(url, q, ac.signal);
-        clearTimeout(timer);
-        return json.elements.map((el) => normalise(el, kind)).filter(Boolean);
-      } catch (e) {
-        lastErr = e;
-      }
-    }
-    throw new Error(`all Overpass endpoints failed: ${lastErr?.message}`);
+    const json = await firstAnswer(q);
+    return json.elements.map((el) => normalise(el, kind)).filter(Boolean);
   });
   return { places: value, cached };
 }
