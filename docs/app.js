@@ -212,6 +212,7 @@ function open(p) {
 async function load({ force = false } = {}) {
   const routed = kind === 'walk' || kind === 'map';
   el('walkbar').hidden = !routed;
+  if (routed) el('openbar').hidden = true;      // render() owns it on food/shops
   if (routed) return loadWalk({ force });
 
   const want = kind;
