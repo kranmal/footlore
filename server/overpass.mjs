@@ -11,11 +11,30 @@ import { through, tileKey, TTL } from './cache.mjs';
 // survive into the browser build, which drops the rest. The main instance
 // returns a 504 often enough under load that having a second CORS-capable
 // mirror is not optional.
+//
+// osm.ch is last on purpose: it has been seen answering 200 with an unloaded
+// database (`timestamp_osm_base: "118705"`, zero nodes in central Bristol), and
+// in the browser build it used to be the *only* fallback, so one bad minute at
+// the primary surfaced as "Couldn't load the feed". private.coffee is a public
+// instance with no stated usage cap and gives the page a second real mirror.
 const ENDPOINTS = [
   'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
   'https://overpass.osm.ch/api/interpreter',
   'https://overpass.kumi.systems/api/interpreter',   // no CORS: server build only
 ];
+
+// A mirror that answered with a stale database or timed out is skipped for a
+// while rather than re-tried (and waited on) by every request in that window.
+// It is still used if nothing else is left, so a lone mirror is never locked out.
+const COOLDOWN_MS = 5 * 60_000;
+const benched = new Map();     // url -> time it may be tried again
+
+const usable = () => {
+  const now = Date.now();
+  const live = ENDPOINTS.filter((u) => (benched.get(u) ?? 0) <= now);
+  return live.length ? live : ENDPOINTS;
+};
 
 /** metres -> degrees, near enough at UK latitudes for a bounding box */
 function bbox(lat, lng, radius) {
@@ -129,9 +148,11 @@ const HEDGE_MS = 8_000;
 const ATTEMPT_MS = 30_000;
 
 function firstAnswer(q) {
+  const urls = usable();
   return new Promise((resolve, reject) => {
     const controllers = [];
-    let next = 0, running = 0, done = false, lastErr, hedge;
+    const errors = [];
+    let next = 0, running = 0, done = false, hedge;
 
     const finish = (fn, v) => {
       if (done) return;
@@ -142,24 +163,25 @@ function firstAnswer(q) {
     };
 
     const launch = () => {
-      if (done || next >= ENDPOINTS.length) return;
-      const url = ENDPOINTS[next++];
+      if (done || next >= urls.length) return;
+      const url = urls[next++];
       const ac = new AbortController();
       controllers.push(ac);
       const timer = setTimeout(() => ac.abort(), ATTEMPT_MS);
       running += 1;
       clearTimeout(hedge);
-      if (next < ENDPOINTS.length) hedge = setTimeout(launch, HEDGE_MS);
+      if (next < urls.length) hedge = setTimeout(launch, HEDGE_MS);
 
       post(url, q, ac.signal).then(
         (json) => { clearTimeout(timer); finish(resolve, json); },
         (e) => {
           clearTimeout(timer);
-          lastErr = e;
           running -= 1;
-          if (done) return;
-          if (next < ENDPOINTS.length) launch();
-          else if (running === 0) finish(reject, new Error(`all Overpass endpoints failed: ${lastErr?.message}`));
+          if (done) return;                    // aborted because another mirror won
+          errors.push(`${new URL(url).host}: ${e.name === 'AbortError' ? 'timed out' : e.message}`);
+          if (/stale mirror|timed out/.test(errors.at(-1))) benched.set(url, Date.now() + COOLDOWN_MS);
+          if (next < urls.length) launch();
+          else if (running === 0) finish(reject, new Error(`all Overpass endpoints failed — ${errors.join('; ')}`));
         },
       );
     };
