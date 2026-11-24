@@ -9,7 +9,9 @@
 // architectural decision in the plan; this file is where it is enforced.
 
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
+import { gzip } from 'node:zlib';
+import { promisify } from 'node:util';
 import { extname, join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { feed } from './places.mjs';
@@ -20,6 +22,7 @@ const ROOT = fileURLToPath(new URL('../web/', import.meta.url));
 // docs/solver/ instead, which puts it at the same URL in both builds.
 const SOLVER = fileURLToPath(new URL('../solver/', import.meta.url));
 const PORT = Number(process.env.PORT ?? 4173);
+const gz = promisify(gzip);
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -45,9 +48,19 @@ function remember(place) {
   while (recent.size > RECENT_MAX) recent.delete(recent.keys().next().value);
 }
 
-function send(res, code, body, type = 'application/json; charset=utf-8') {
+// A feed of 20 cards is mostly repeated key names and Wikipedia prose, which is
+// exactly what gzip is good at — typically a 5-8x saving on a phone connection.
+const SMALL = 1024;
+
+async function send(res, code, body, type = 'application/json; charset=utf-8', req = res.req) {
   const payload = typeof body === 'string' ? body : JSON.stringify(body);
-  res.writeHead(code, { 'content-type': type, 'cache-control': 'no-store' });
+  const headers = { 'content-type': type, 'cache-control': 'no-store', vary: 'accept-encoding' };
+  if (payload.length > SMALL && /\bgzip\b/.test(req?.headers['accept-encoding'] ?? '')) {
+    headers['content-encoding'] = 'gzip';
+    res.writeHead(code, headers);
+    return res.end(await gz(payload));
+  }
+  res.writeHead(code, headers);
   res.end(payload);
 }
 
@@ -73,15 +86,31 @@ async function handleNearby(url, res) {
   }
 }
 
-async function serveStatic(pathname, res) {
+async function serveStatic(pathname, req, res) {
   const rel = normalize(pathname === '/' ? '/index.html' : pathname).replace(/^(\.\.[/\\])+/, '');
   const solving = rel.startsWith('/solver/') || rel.startsWith('solver/');
   const base = solving ? SOLVER : ROOT;
   const file = join(base, solving ? rel.replace(/^\/?solver\//, '') : rel);
   if (!file.startsWith(base)) return send(res, 403, { error: 'no' });
   try {
+    // Revalidate rather than re-download: the ETag is size + mtime, so an edit
+    // is picked up at once and an unchanged file costs a 304 with no body.
+    const st = await stat(file);
+    const etag = `"${st.size.toString(36)}-${Math.round(st.mtimeMs).toString(36)}"`;
+    const type = TYPES[extname(file)] ?? 'application/octet-stream';
+    if (req.headers['if-none-match'] === etag) {
+      res.writeHead(304, { etag, 'cache-control': 'no-cache' });
+      return res.end();
+    }
     const body = await readFile(file);
-    res.writeHead(200, { 'content-type': TYPES[extname(file)] ?? 'application/octet-stream' });
+    const headers = { 'content-type': type, etag, 'cache-control': 'no-cache', vary: 'accept-encoding' };
+    if (body.length > SMALL && /text|javascript|json|svg/.test(type) &&
+        /\bgzip\b/.test(req.headers['accept-encoding'] ?? '')) {
+      headers['content-encoding'] = 'gzip';
+      res.writeHead(200, headers);
+      return res.end(await gz(body));
+    }
+    res.writeHead(200, headers);
     res.end(body);
   } catch {
     send(res, 404, { error: 'not found' });
@@ -110,7 +139,7 @@ const server = createServer(async (req, res) => {
 
   if (url.pathname.startsWith('/api/')) return send(res, 404, { error: 'no such endpoint' });
 
-  serveStatic(url.pathname, res);
+  serveStatic(url.pathname, req, res);
 });
 
 // A container stops by signal; without this Node ignores SIGTERM and the host

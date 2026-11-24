@@ -19,24 +19,23 @@ async function json(url) {
 async function titlesForWikidata(qids) {
   const out = {};
   const missing = [];
-  for (const q of qids) {
-    const hit = await get('wd', q, TTL.wiki);
-    if (hit !== null) out[q] = hit; else missing.push(q);
-  }
-  for (const batch of chunk(missing, 50)) {
+  const hits = await Promise.all(qids.map((q) => get('wd', q, TTL.wiki)));
+  qids.forEach((q, i) => { if (hits[i] !== null) out[q] = hits[i]; else missing.push(q); });
+  // Batches are independent, so they go out together rather than one after another.
+  await Promise.all(chunk(missing, 50).map(async (batch) => {
     const url = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${batch.join('|')}` +
       `&props=sitelinks&sitefilter=enwiki&format=json&origin=*`;
     try {
       const data = await json(url);
-      for (const q of batch) {
+      await Promise.all(batch.map((q) => {
         const title = data.entities?.[q]?.sitelinks?.enwiki?.title ?? null;
         out[q] = title;
-        await set('wd', q, title);
-      }
+        return set('wd', q, title);
+      }));
     } catch {
       for (const q of batch) out[q] = null;
     }
-  }
+  }));
   return out;
 }
 
@@ -44,11 +43,9 @@ async function titlesForWikidata(qids) {
 async function extractsFor(titles) {
   const out = {};
   const missing = [];
-  for (const t of titles) {
-    const hit = await get('wiki', t, TTL.wiki);
-    if (hit !== null) out[t] = hit; else missing.push(t);
-  }
-  for (const batch of chunk(missing, 20)) {
+  const hits = await Promise.all(titles.map((t) => get('wiki', t, TTL.wiki)));
+  titles.forEach((t, i) => { if (hits[i] !== null) out[t] = hits[i]; else missing.push(t); });
+  await Promise.all(chunk(missing, 20).map(async (batch) => {
     const url = `https://en.wikipedia.org/w/api.php?action=query&format=json&redirects=1` +
       `&prop=extracts|pageimages|info&inprop=url&exintro=1&explaintext=1&piprop=thumbnail&pithumbsize=800` +
       // origin=* is what makes this callable from a page; the Wikidata call
@@ -69,15 +66,15 @@ async function extractsFor(titles) {
       }
       // Follow any redirects Wikipedia resolved for us.
       const redirects = Object.fromEntries((data.query?.redirects ?? []).map((r) => [r.from, r.to]));
-      for (const t of batch) {
+      await Promise.all(batch.map((t) => {
         const resolved = byTitle[t] ?? byTitle[redirects[t]] ?? null;
         out[t] = resolved;
-        await set('wiki', t, resolved);
-      }
+        return set('wiki', t, resolved);
+      }));
     } catch {
       for (const t of batch) out[t] = null;
     }
-  }
+  }));
   return out;
 }
 

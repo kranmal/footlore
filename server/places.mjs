@@ -79,9 +79,13 @@ export async function nearby({ lat, lng, radius = 900, limit = 25, seen = [], mi
 /** One radius: fetch, enrich, floor, rank. No narration — that costs money. */
 async function candidates({ lat, lng, radius, origin, seen, limit }) {
   const { places: raw, cached } = await fetchNearby(lat, lng, radius);
-  const enriched = await enrich(raw);
+  // Tag rejections depend on nothing an article could change, so they are
+  // applied before the Wikipedia round trips rather than after: no lookup is
+  // spent on a post box. The story floor itself needs the extract and stays below.
+  const plausible = raw.filter((p) => !storyStrength(p).rejected);
+  const enriched = await enrich(plausible);
 
-  // Story floor. This is where the post boxes go.
+  // Story floor. This is where the thin ones go.
   const scored = enriched.map((p) => ({ ...p, ...scoreOf(p) }));
   const kept = scored.filter((p) => !p.rejected && p.story >= STORY_FLOOR);
 
@@ -90,7 +94,7 @@ async function candidates({ lat, lng, radius, origin, seen, limit }) {
   const ranked = dedupe(kept.map((p) => rank(p, { origin, seen })).sort((a, b) => b.rankScore - a.rankScore))
     .slice(0, limit);
 
-  return { ranked, radius, cached, found: raw.length, belowFloor: scored.length - kept.length };
+  return { ranked, radius, cached, found: raw.length, belowFloor: raw.length - kept.length };
 }
 
 /** Keep the best-ranked place per Wikipedia article. */
