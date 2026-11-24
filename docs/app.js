@@ -2,6 +2,7 @@
 
 import { loadNearby, QUOTING_NOTE } from './api.js';
 import { buildWalk, renderWalk, BUDGETS } from './walkview.js';
+import { renderMap } from './mapview.js';
 // Everything interesting happens behind api.js; this file just shows it.
 
 const BRISTOL = { lat: 51.4546, lng: -2.5945, label: 'Corn Street, Bristol' };
@@ -18,6 +19,8 @@ const TABS = [
   // other tabs already loaded. Kept in the same list so the tab wiring below
   // stays one loop rather than a special case.
   { kind: 'walk', title: 'Walk', empty: 'No walk to build' },
+  // Map is the same walk drawn on tiles: same solve, same controls, no extra fetch.
+  { kind: 'map', title: 'Map', empty: 'No walk to draw' },
 ];
 
 const el = (id) => document.getElementById(id);
@@ -207,8 +210,9 @@ function open(p) {
 }
 
 async function load({ force = false } = {}) {
-  el('walkbar').hidden = kind !== 'walk';
-  if (kind === 'walk') return loadWalk({ force });
+  const routed = kind === 'walk' || kind === 'map';
+  el('walkbar').hidden = !routed;
+  if (routed) return loadWalk({ force });
 
   const want = kind;
   const key = `${want}:${radius}`;
@@ -267,6 +271,7 @@ async function prefetchOthers() {
 }
 
 async function loadWalk({ force = false } = {}) {
+  const mine = kind;                           // 'walk' or 'map'
   skeletons(3);
   status.replaceChildren(html('<span class="dot"></span>working out a route…'));
   try {
@@ -276,12 +281,13 @@ async function loadWalk({ force = false } = {}) {
       feedFor('see', force),
       wantMeal ? feedFor('food', force) : Promise.resolve({ places: [] }),
     ]);
-    if (kind !== 'walk') return;
+    if (kind !== mine) return;
 
     const result = buildWalk({
       here, sights: see.places, foods: food.places, budget, wantMeal,
     });
-    renderWalk(feed, result, { budget, wantMeal, onDirections: (p) => directionsLink(p, 'Go') });
+    if (mine === 'map' && result.ok) renderMap(feed, { here, result, budget });
+    else renderWalk(feed, result, { budget, wantMeal, onDirections: (p) => directionsLink(p, 'Go') });
 
     status.replaceChildren(html(result.ok
       ? `<span class="dot"></span>${result.sched.stops.length} stops · ${result.sched.total} of ${budget} min · ` +
@@ -289,7 +295,7 @@ async function loadWalk({ force = false } = {}) {
       : `<span class="dot" style="background:var(--amber)"></span>no walk fits`));
     el('attrib').textContent = (see.meta?.attribution ?? []).join('  ·  ');
   } catch (e) {
-    if (kind !== 'walk') return;
+    if (kind !== mine) return;
     feed.replaceChildren(html(`<div class="note"><b>Couldn't build a walk.</b><br>${e.message}</div>`));
     status.replaceChildren(html('<span class="dot" style="background:var(--amber)"></span>offline'));
   }

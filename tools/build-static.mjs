@@ -66,6 +66,7 @@ export async function loadNearby({ lat, lng, radius, seen, kind = 'see' }) {
 
 await cp(join(ROOT, 'web', 'app.js'), join(OUT, 'app.js'));
 await cp(join(ROOT, 'web', 'walkview.js'), join(OUT, 'walkview.js'));
+await cp(join(ROOT, 'web', 'mapview.js'), join(OUT, 'mapview.js'));
 // The solver is already browser-safe ESM — no rewriting, just a copy. The
 // server build serves the same files from the same URL (see server/index.mjs),
 // so web/walkview.js imports './solver/…' and is identical in both builds.
