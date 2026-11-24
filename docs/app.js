@@ -221,11 +221,13 @@ async function load({ force = false } = {}) {
   skeletons();
   status.replaceChildren(html('<span class="dot"></span>looking around…'));
   try {
-    const data = await loadNearby({ lat: here.lat, lng: here.lng, radius, seen: [...seen], kind: want });
-    results.set(key, data);
+    // Through feedFor, so a tab the prefetcher is already fetching is awaited
+    // rather than asked for a second time.
+    const data = await feedFor(want, force);
     if (want !== kind) return;              // tab switched while this was in flight
     places = data.places;
     render(data.meta);
+    prefetchOthers();
   } catch (e) {
     if (want !== kind) return;
     feed.replaceChildren(html(`<div class="note"><b>Couldn't load the feed.</b><br>${e.message}</div>`));
@@ -233,13 +235,35 @@ async function load({ force = false } = {}) {
   }
 }
 
+// Requests in flight, by tab and radius, so a click on a tab that is already
+// being prefetched joins that request instead of starting another.
+const pending = new Map();
+
 /** One tab's feed, from the cache if it is already there. */
-async function feedFor(want, force) {
+function feedFor(want, force) {
   const key = `${want}:${radius}`;
-  if (!force && results.has(key)) return results.get(key);
-  const data = await loadNearby({ lat: here.lat, lng: here.lng, radius, seen: [...seen], kind: want });
-  results.set(key, data);
-  return data;
+  if (!force && results.has(key)) return Promise.resolve(results.get(key));
+  if (!force && pending.has(key)) return pending.get(key);
+  const p = loadNearby({ lat: here.lat, lng: here.lng, radius, seen: [...seen], kind: want })
+    .then((data) => { results.set(key, data); return data; })
+    .finally(() => pending.delete(key));
+  pending.set(key, p);
+  return p;
+}
+
+// Once the tab you opened has drawn, quietly fetch the other two so switching
+// is instant. One at a time, and never on a metered connection: Overpass
+// rate-limits, and on the static build every visitor spends their own budget.
+// A failure here is silent; the tab simply loads normally when it is opened.
+let prefetchRun = 0;
+async function prefetchOthers() {
+  if (navigator.connection?.saveData) return;
+  const run = ++prefetchRun;
+  for (const k of ['see', 'food', 'shop']) {
+    if (run !== prefetchRun) return;          // a newer load took over
+    if (k === kind || results.has(`${k}:${radius}`)) continue;
+    try { await feedFor(k, false); } catch { /* opened later, loads normally */ }
+  }
 }
 
 async function loadWalk({ force = false } = {}) {
